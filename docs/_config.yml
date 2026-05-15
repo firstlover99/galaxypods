@@ -2,8 +2,10 @@
 title: GalaxyPods
 description: Pods Companion for Galaxy — Privacy Policy, Terms, Support
 theme: jekyll-theme-cayman
+# url/baseurl을 비우면 GitHub Pages가 project page prefix(/galaxypods/)를 자동 처리.
+# permalink가 /privacy-ko/ 같이 절대 경로여도 GitHub이 prefix를 자동 부착.
 url: ""
-baseurl: "/galaxypods"
+baseurl: ""
 lang: ko
 
 # 출시 전. URL은 GitHub username + 리포명에 맞춰 수정
