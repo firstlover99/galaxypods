@@ -1,0 +1,34 @@
+# GalaxyPods GitHub Pages (Jekyll) 설정
+title: GalaxyPods
+description: Pods Companion for Galaxy — Privacy Policy, Terms, Support
+theme: jekyll-theme-cayman
+url: ""
+baseurl: "/galaxypods"
+lang: ko
+
+# 출시 전. URL은 GitHub username + 리포명에 맞춰 수정
+# 예. https://yourusername.github.io/galaxypods/
+# Custom domain 사용 시 baseurl을 빈 문자열로 변경
+
+# Markdown 처리
+markdown: kramdown
+highlighter: rouge
+
+# 빌드 제외
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+
+# Pages 폴더에서만 빌드
+include:
+  - "*.md"
+
+# 한국어/영어 페이지 인덱싱
+defaults:
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: default

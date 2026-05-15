@@ -1,0 +1,52 @@
+# GalaxyPods detekt 설정 — 기본 규칙 + 프로젝트 맞춤
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+complexity:
+  active: true
+  ComplexMethod:
+    threshold: 20  # 파서/FGS는 분기가 많아서 다소 완화
+  LongMethod:
+    threshold: 80
+  TooManyFunctions:
+    active: false  # ViewModel/Repository는 함수 다수 자연스러움
+
+style:
+  active: true
+  MagicNumber:
+    ignoreNumbers: ['-1', '0', '1', '2', '4', '8', '10', '16', '100', '255', '0x07', '0x0F', '0xFF', '0x004C', '0x1001']
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreEnums: true
+  MaxLineLength:
+    maxLineLength: 120
+  NewLineAtEndOfFile:
+    active: true
+  ReturnCount:
+    max: 4
+  WildcardImport:
+    active: true
+
+naming:
+  active: true
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+
+empty-blocks:
+  active: true
+
+exceptions:
+  active: true
+  TooGenericExceptionCaught:
+    active: false  # BLE 콜백은 광범위 catch 정당화 가능
+
+potential-bugs:
+  active: true
+
+performance:
+  active: true

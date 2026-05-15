@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GalaxyPods 적응형 런처 아이콘 — 실제 아이콘은 디자인 단계에서 교체 -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@android:color/system_neutral1_500" />
+    <foreground android:drawable="@android:color/system_accent1_500" />
+</adaptive-icon>

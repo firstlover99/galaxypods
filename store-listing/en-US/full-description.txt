@@ -1,0 +1,48 @@
+﻿Use your wireless earbuds on Galaxy as smoothly as on iOS.
+
+🔋 Battery at a Glance
+See left/right earbud and case battery on the home screen, in the status bar, and as a home-screen widget.
+
+📦 Case Open Notification
+Open the case and instantly see battery levels in a notification.
+
+👂 In-Ear Auto Pause
+Music pauses when you remove an earbud and resumes when you put it back.
+
+🔄 Smart Auto Connect
+Detects nearby earbuds and shows a quick-connect notification.
+
+📍 Last Known Location
+Records the last spot where the connection dropped (optional, helps when earbuds are misplaced).
+
+🛡️ Galaxy Power Saver Wizard
+Auto-detects your One UI version and walks you through the right battery exception so background tracking doesn't get killed.
+
+🌏 Native Korean Support
+All UI, notifications, and help text written natively in Korean.
+
+✅ Free, No Ads, No Tracking
+No data leaves your device. Everything is processed locally.
+
+🎧 Supported Earbuds
+- AirPods 2nd / 3rd / 4 (incl. ANC)
+- AirPods Pro 1st / 2nd (Lightning/USB-C) / 3rd
+- AirPods Max
+- Galaxy S21 or newer (One UI 3.0+ recommended)
+
+⚙️ Permissions
+- Bluetooth — receive earbud signals (no location inference)
+- Notifications — case open / battery alerts
+- Location (optional) — only when you enable Last Known Location
+- Full permission rationale inside the app under "Permissions"
+
+📜 Disclaimer (Required Reading)
+This app is not affiliated with Apple Inc. "AirPods" is a registered trademark of Apple Inc. This app is not developed, endorsed, or sponsored by Apple.
+This app is also not affiliated with Samsung Electronics. "Galaxy" is a trademark of Samsung Electronics.
+
+📄 Legal
+- Privacy Policy. https://firstlover99.github.io/galaxypods/privacy-en/
+- Terms of Service. https://firstlover99.github.io/galaxypods/terms-en/
+
+💌 Contact
+galaxypods.support@gmail.com

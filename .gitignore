@@ -1,0 +1,45 @@
+# GalaxyPods .gitignore
+# Build artifacts
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Android Studio
+*.jks
+*.keystore
+keystore.properties
+
+# Firebase
+google-services.json
+firebase-credentials.json
+
+# IDE
+.vscode/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Temporary
+*.log
+*.tmp
+*.bak
+
+# Test reports
+**/build/reports/
+**/build/test-results/
+
+# Coverage
+**/build/jacoco/
+
+# Detekt / ktlint
+.detekt-baseline.xml

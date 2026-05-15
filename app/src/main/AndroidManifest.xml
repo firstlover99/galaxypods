@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GalaxyPods 매니페스트 — BLE/FGS/오버레이 권한 + connectedDevice FGS 등록 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ============================================================ -->
+    <!-- BLE 스캔 (Android 12+) — 위치 정보 사용 안 함 명시 -->
+    <!-- ============================================================ -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="s" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- 레거시 BLE (Android 11 이하) -->
+    <uses-permission android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="30"
+        tools:node="merge" />
+
+    <!-- ============================================================ -->
+    <!-- 포그라운드 서비스 (connectedDevice 타입 — Android 14+ 의무) -->
+    <!-- ============================================================ -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+
+    <!-- ============================================================ -->
+    <!-- 케이스 오픈 알림 -->
+    <!-- v1.0: 풀스크린 알림만 사용 (Play 정책 회피)
+         v1.1: SYSTEM_ALERT_WINDOW 옵션 활성화 검토 -->
+    <!-- ============================================================ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- v1.1에서 추가:
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /> -->
+
+    <!-- ============================================================ -->
+    <!-- 위치 (마지막 위치 기록 — BLE 끊김 시 1회만 fetch, 백그라운드 X) -->
+    <!-- ============================================================ -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- ============================================================ -->
+    <!-- 배터리 최적화 예외 + 부팅 후 자동 시작 -->
+    <!-- ============================================================ -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- ============================================================ -->
+    <!-- 하드웨어 요건 -->
+    <!-- ============================================================ -->
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="true" />
+
+    <application
+        android:name=".GalaxyPodsApp"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.GalaxyPods"
+        tools:targetApi="34">
+
+        <!-- Google Maps API 키 — local.properties에서 주입 (gradle.kts manifestPlaceholders) -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
+        <!-- 메인 액티비티 (Phase 3에서 구현) -->
+        <activity
+            android:name=".presentation.MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.GalaxyPods">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 포그라운드 서비스 (Phase 2에서 구현) -->
+        <service
+            android:name=".service.PodsForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+
+        <!-- 부팅 자동 시작 (Phase 2에서 구현, Android 10+ FGS 시작 제한 대응 필요) -->
+        <receiver
+            android:name=".service.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 알림 액션 라우팅 (재생/정지/다음/이전/Voice Assistant) -->
+        <receiver
+            android:name=".service.NotificationActionReceiver"
+            android:exported="false" />
+
+        <!-- 홈 위젯 — 배터리 좌/우/케이스 -->
+        <receiver
+            android:name=".presentation.widget.PodsAppWidgetProvider"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_pods_info" />
+        </receiver>
+
+    </application>
+</manifest>

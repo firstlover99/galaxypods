@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GalaxyPods 위젯 다크 모드 색상 -->
+<resources>
+    <color name="widget_background_color">#FF1A1C1E</color>
+</resources>

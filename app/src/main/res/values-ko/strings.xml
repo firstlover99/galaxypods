@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GalaxyPods 한국어 문자열 리소스 — 한국 사용자 시나리오 우선 -->
+<resources>
+    <string name="app_name">GalaxyPods</string>
+    <string name="app_tagline">Galaxy를 위한 무선이어폰 도우미</string>
+
+    <!-- ============================================================ -->
+    <!-- 상표 면책 (Apple / Samsung) — About 화면 필수 표시 -->
+    <!-- ============================================================ -->
+    <string name="disclaimer_apple_short">Apple Inc.와 무관합니다.</string>
+    <string name="disclaimer_apple_full">본 앱은 Apple Inc.와 무관합니다. \"AirPods\"는 Apple Inc.의 등록상표입니다. 본 앱은 Apple이 개발·승인·후원하지 않습니다.</string>
+    <string name="disclaimer_samsung_full">본 앱은 Samsung Electronics와도 무관합니다. \"Galaxy\"는 Samsung Electronics의 상표입니다.</string>
+
+    <!-- 법무 링크 (URL은 BuildConfig로 주입) -->
+    <string name="link_privacy_policy">개인정보처리방침</string>
+    <string name="link_terms_of_service">이용약관</string>
+    <string name="link_data_deletion">데이터 삭제 안내</string>
+
+    <!-- ============================================================ -->
+    <!-- 알림 -->
+    <!-- ============================================================ -->
+    <string name="fgs_channel_name">이어폰 연결 유지</string>
+    <string name="fgs_channel_desc">백그라운드에서 이어폰과의 연결을 유지합니다.</string>
+    <string name="fgs_notification_title">GalaxyPods 실행 중</string>
+
+    <string name="case_open_channel_name">케이스 오픈 알림</string>
+    <string name="case_open_channel_desc">이어폰 케이스를 열면 표시되는 알림입니다.</string>
+
+    <!-- 위젯 -->
+    <string name="widget_description">GalaxyPods 배터리 (왼쪽 / 오른쪽 / 케이스)</string>
+
+    <!-- ============================================================ -->
+    <!-- 권한 안내 문구 (요청 전 표시) -->
+    <!-- ============================================================ -->
+    <string name="rationale_bluetooth">이어폰 신호를 받기 위해 Bluetooth 권한이 필요합니다. \"위치 정보 사용 안 함\" 플래그가 부착되어 있어 Bluetooth 스캔으로부터 위치를 추론할 수 없습니다.</string>
+    <string name="rationale_notifications">케이스 오픈 알림과 배터리 경고를 보여드리려면 알림 권한이 필요합니다.</string>
+    <string name="rationale_location">위치 권한은 \"마지막 위치 기록\"을 켤 때만 사용됩니다. 연결이 끊긴 시점에 1회만 기록되며 백그라운드에서 추적하지 않습니다.</string>
+
+    <!-- ============================================================ -->
+    <!-- 정보 화면 -->
+    <!-- ============================================================ -->
+    <string name="about_title">정보</string>
+    <string name="about_version">버전 %1$s</string>
+    <string name="about_open_source_licenses">오픈소스 라이선스</string>
+
+    <!-- ============================================================ -->
+    <!-- 온보딩 -->
+    <!-- ============================================================ -->
+    <string name="onboarding_welcome_title">GalaxyPods에 오신 걸 환영합니다</string>
+    <string name="onboarding_welcome_body">Galaxy 단말에서 무선 이어폰을 더 편하게 쓸 수 있도록 5단계 설정을 안내합니다. 권한은 모두 사용자가 직접 선택하며 언제든 끌 수 있습니다.</string>
+    <string name="onboarding_step_bluetooth">Bluetooth 권한</string>
+    <string name="onboarding_step_notification">알림 권한</string>
+    <string name="onboarding_step_battery">Samsung 절전 정책</string>
+    <string name="onboarding_step_location">마지막 위치 기록 (선택)</string>
+    <string name="onboarding_step_done">준비 완료</string>
+    <string name="onboarding_open_battery_settings">절전 설정 열기</string>
+    <string name="onboarding_request_permission">권한 요청</string>
+    <string name="onboarding_action_start">시작하기</string>
+    <string name="onboarding_nav_previous">이전</string>
+    <string name="onboarding_nav_next">다음</string>
+
+    <!-- ============================================================ -->
+    <!-- 공통 액션 -->
+    <!-- ============================================================ -->
+    <string name="action_settings">설정</string>
+    <string name="action_close">닫기</string>
+    <string name="action_agree_continue">동의하고 계속</string>
+</resources>
