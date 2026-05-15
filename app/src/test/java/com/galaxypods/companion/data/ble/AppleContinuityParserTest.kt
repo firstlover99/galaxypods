@@ -236,10 +236,8 @@ class AppleContinuityParserTest {
         assertThat(resource).isNotNull()
     }
 
-    /**
-     * TODO. 실측 dump가 추가되면 본 테스트를 ParameterizedTest로 확장.
-     * dump 파일명에서 모델 추론 → 파싱 결과 모델 일치 확인.
-     */
+    // TODO. 실측 dump가 추가되면 본 테스트를 ParameterizedTest로 확장.
+    //       dump 파일명에서 모델 추론 → 파싱 결과 모델 일치 확인.
 
     companion object {
         @JvmStatic

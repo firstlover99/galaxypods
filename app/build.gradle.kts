@@ -26,16 +26,18 @@ android {
 
         // Google Maps API 키 — local.properties의 MAPS_API_KEY를 주입.
         // local.properties는 .gitignore 대상. 누락 시 placeholder 키 사용 (지도 표시 X).
-        val mapsApiKey = providers.gradleProperty("MAPS_API_KEY").orNull
-            ?: System.getenv("MAPS_API_KEY")
-            ?: "MISSING_KEY"
+        val mapsApiKey =
+            providers.gradleProperty("MAPS_API_KEY").orNull
+                ?: System.getenv("MAPS_API_KEY")
+                ?: "MISSING_KEY"
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
 
         // GitHub Pages URL 상수 (BuildConfig 노출).
         // 우선순위. gradle property > env > 기본값(firstlover99)
-        val pagesBase = providers.gradleProperty("PAGES_BASE_URL").orNull
-            ?: System.getenv("PAGES_BASE_URL")
-            ?: "https://firstlover99.github.io/galaxypods"
+        val pagesBase =
+            providers.gradleProperty("PAGES_BASE_URL").orNull
+                ?: System.getenv("PAGES_BASE_URL")
+                ?: "https://firstlover99.github.io/galaxypods"
         buildConfigField("String", "PRIVACY_POLICY_URL", "\"$pagesBase/privacy-ko/\"")
         buildConfigField("String", "TERMS_URL", "\"$pagesBase/terms-ko/\"")
         buildConfigField("String", "DATA_DELETION_URL", "\"$pagesBase/data-deletion-ko/\"")
@@ -70,10 +72,11 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
-        freeCompilerArgs += listOf(
-            "-Xjvm-default=all",
-            "-opt-in=kotlin.RequiresOptIn",
-        )
+        freeCompilerArgs +=
+            listOf(
+                "-Xjvm-default=all",
+                "-opt-in=kotlin.RequiresOptIn",
+            )
     }
 
     buildFeatures {

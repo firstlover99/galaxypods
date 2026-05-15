@@ -16,6 +16,9 @@ lang: ko
 markdown: kramdown
 highlighter: rouge
 
+# Pretty permalink — /privacy-ko/ 형식 trailing slash. front matter permalink가 무시되는 케이스 보강.
+permalink: /:basename/
+
 # 빌드 제외
 exclude:
   - README.md
