@@ -24,6 +24,9 @@ firebase-credentials.json
 *.swp
 *.swo
 
+# Claude Code 내부 (세션 상태, 스케줄러 lock)
+.claude/
+
 # OS
 Thumbs.db
 ehthumbs.db
