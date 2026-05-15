@@ -4,9 +4,9 @@ package com.galaxypods.companion.data.ble
 import com.galaxypods.companion.domain.model.AirPodsAdvertisement
 import com.galaxypods.companion.domain.model.AirPodsModel
 import com.google.common.truth.Truth.assertThat
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 

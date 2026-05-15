@@ -119,6 +119,8 @@ class SamsungQuirks
          * RARE 이상이면 Samsung 절전 정책에 의해 백그라운드 동작이 제한될 수 있음.
          */
         fun sleepStatus(): SleepStatus {
+            // appStandbyBucket은 API 28+ (Android 9+). minSdk 26~27는 UNKNOWN.
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return SleepStatus.UNKNOWN
             val usm =
                 context.getSystemService(UsageStatsManager::class.java)
                     ?: return SleepStatus.UNKNOWN
