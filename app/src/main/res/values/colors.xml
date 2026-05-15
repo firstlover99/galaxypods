@@ -2,4 +2,6 @@
 <!-- GalaxyPods 위젯/리소스용 색상 (라이트 폴백) -->
 <resources>
     <color name="widget_background_color">#FFFFFFFF</color>
+    <color name="launcher_background">#FF1565C0</color>
+    <color name="launcher_foreground">#FFFFFFFF</color>
 </resources>

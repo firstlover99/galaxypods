@@ -86,12 +86,15 @@ class AutoPlayPause
                     }
                 }
                 Mode.RELAXED_EITHER -> {
-                    val wasAnyIn = previous.left || previous.right
-                    val isAnyIn = current.left || current.right
+                    // 한쪽이라도 빼면 정지. 양쪽 모두 다시 끼면 재생.
+                    val wasBothIn = previous.left && previous.right
+                    val isAnyOut = !current.left || !current.right
+                    val wasAnyOut = !previous.left || !previous.right
+                    val isBothIn = current.left && current.right
 
                     when {
-                        wasAnyIn && !isAnyIn -> Action.PAUSE
-                        !wasAnyIn && current.left && current.right -> Action.PLAY
+                        wasBothIn && isAnyOut -> Action.PAUSE
+                        wasAnyOut && isBothIn -> Action.PLAY
                         else -> Action.NONE
                     }
                 }

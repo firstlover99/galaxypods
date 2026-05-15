@@ -52,7 +52,8 @@ class CaseOpenDetect
             if (previous < 0) return // 첫 광고
             if (ad.lidOpenCount <= previous) return // 동일 또는 감소
 
-            if (nowMs - lastTriggerAtMs < COOLDOWN_MS) return
+            // 첫 트리거(lastTriggerAtMs == 0)는 쿨다운 우회. 두 번째부터 쿨다운 적용.
+            if (lastTriggerAtMs > 0 && nowMs - lastTriggerAtMs < COOLDOWN_MS) return
 
             lastTriggerAtMs = nowMs
             onCaseOpened(ad)
