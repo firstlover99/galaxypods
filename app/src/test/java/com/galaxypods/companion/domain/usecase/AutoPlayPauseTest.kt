@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 class AutoPlayPauseTest {
-
     private lateinit var mediaController: MediaController
     private lateinit var useCase: AutoPlayPause
 
@@ -54,7 +53,6 @@ class AutoPlayPauseTest {
     @Nested
     @DisplayName("RELAXED_EITHER 모드 (기본)")
     inner class RelaxedEither {
-
         @Test
         @DisplayName("양쪽 착용 → 한쪽만 빼면 PAUSE")
         fun bothIn_then_oneOut_triggersPause() {
@@ -94,9 +92,10 @@ class AutoPlayPauseTest {
     @Nested
     @DisplayName("STRICT_BOTH 모드")
     inner class StrictBoth {
-
         @BeforeEach
-        fun setMode() { useCase.mode = AutoPlayPause.Mode.STRICT_BOTH }
+        fun setMode() {
+            useCase.mode = AutoPlayPause.Mode.STRICT_BOTH
+        }
 
         @Test
         @DisplayName("한쪽만 빼면 정지 X")
@@ -143,7 +142,10 @@ class AutoPlayPauseTest {
         verify(exactly = 0) { mediaController.play() }
     }
 
-    private fun adWith(left: Boolean, right: Boolean): AirPodsAdvertisement =
+    private fun adWith(
+        left: Boolean,
+        right: Boolean,
+    ): AirPodsAdvertisement =
         AirPodsAdvertisement(
             model = AirPodsModel.AIRPODS_PRO_2_USBC,
             leftBatteryPercent = 80,

@@ -43,7 +43,6 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -84,13 +83,16 @@ private fun AppContent(viewModel: AppGateViewModel = hiltViewModel()) {
  * MainActivity가 OnboardingScreen / MainScreen 중 무엇을 띄울지 결정.
  */
 @HiltViewModel
-class AppGateViewModel @Inject constructor(
-    preferences: AppPreferences,
-) : ViewModel() {
-    val onboardingCompleted: StateFlow<Boolean> = preferences.onboardingCompleted
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = false,
-        )
-}
+class AppGateViewModel
+    @Inject
+    constructor(
+        preferences: AppPreferences,
+    ) : ViewModel() {
+        val onboardingCompleted: StateFlow<Boolean> =
+            preferences.onboardingCompleted
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.Eagerly,
+                    initialValue = false,
+                )
+    }

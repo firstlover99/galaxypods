@@ -17,8 +17,8 @@ import com.galaxypods.companion.data.preferences.AppPreferences
 import com.galaxypods.companion.data.system.MediaController
 import com.galaxypods.companion.data.system.VoiceAnnouncer
 import com.galaxypods.companion.domain.model.AirPodsAdvertisement
-import com.galaxypods.companion.domain.repository.PodsRepository
 import com.galaxypods.companion.domain.model.LastLocation
+import com.galaxypods.companion.domain.repository.PodsRepository
 import com.galaxypods.companion.domain.usecase.AutoPlayPause
 import com.galaxypods.companion.domain.usecase.CaseLostDetect
 import com.galaxypods.companion.domain.usecase.CaseOpenDetect
@@ -26,9 +26,9 @@ import com.galaxypods.companion.presentation.MainActivity
 import com.galaxypods.companion.presentation.widget.AppWidgetUpdater
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
@@ -50,17 +50,26 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class PodsForegroundService : Service() {
-
     @Inject lateinit var repository: PodsRepository
+
     @Inject lateinit var voiceAnnouncer: VoiceAnnouncer
+
     @Inject lateinit var mediaController: MediaController
+
     @Inject lateinit var autoPlayPause: AutoPlayPause
+
     @Inject lateinit var caseOpenDetect: CaseOpenDetect
+
     @Inject lateinit var caseOpenNotifier: CaseOpenNotifier
+
     @Inject lateinit var lastLocationStore: LastLocationStore
+
     @Inject lateinit var preferences: AppPreferences
+
     @Inject lateinit var widgetUpdater: AppWidgetUpdater
+
     @Inject lateinit var caseLostDetect: CaseLostDetect
+
     @Inject lateinit var caseLostNotifier: CaseLostNotifier
 
     private val supervisor: Job = SupervisorJob()
@@ -77,14 +86,19 @@ class PodsForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         startInForeground(initialNotification())
-        notificationActionReceiver = NotificationActionReceiver().also {
-            NotificationActionReceiver.register(this, it)
-        }
+        notificationActionReceiver =
+            NotificationActionReceiver().also {
+                NotificationActionReceiver.register(this, it)
+            }
         voiceAnnouncer.initialize()
         observeRepository()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         when (intent?.action) {
             ACTION_STOP -> {
                 stopSelf()
@@ -147,9 +161,12 @@ class PodsForegroundService : Service() {
 
         scope.launch {
             val locationEnabled = preferences.locationRecordEnabled.firstOrNull() ?: false
-            val capturedAtDisconnect: LastLocation? = if (locationEnabled) {
-                lastLocationStore.captureNow()
-            } else null
+            val capturedAtDisconnect: LastLocation? =
+                if (locationEnabled) {
+                    lastLocationStore.captureNow()
+                } else {
+                    null
+                }
 
             // 분실 감지 예약 (옵트인 시)
             val lostEnabled = preferences.caseLostAlertEnabled.firstOrNull() ?: false
@@ -157,24 +174,29 @@ class PodsForegroundService : Service() {
 
             caseLostDetect.enabled = true
             pendingLostCheck?.cancel()
-            pendingLostCheck = scope.launch {
-                kotlinx.coroutines.delay(CaseLostDetect.DELAY_MS)
-                runLostCheck(capturedAtDisconnect)
-            }
+            pendingLostCheck =
+                scope.launch {
+                    kotlinx.coroutines.delay(CaseLostDetect.DELAY_MS)
+                    runLostCheck(capturedAtDisconnect)
+                }
         }
     }
 
     private suspend fun runLostCheck(disconnectedAt: LastLocation) {
-        val stillDisconnected = repository.connectionStatus.value !=
-            PodsRepository.ConnectionStatus.CONNECTED
+        val stillDisconnected =
+            repository.connectionStatus.value !=
+                PodsRepository.ConnectionStatus.CONNECTED
         if (!stillDisconnected) return
 
         val current = lastLocationStore.captureNow() ?: return
         if (caseLostDetect.shouldAlert(disconnectedAt, current, stillDisconnected = true)) {
-            val distance = caseLostDetect.haversineMeters(
-                disconnectedAt.latitude, disconnectedAt.longitude,
-                current.latitude, current.longitude,
-            )
+            val distance =
+                caseLostDetect.haversineMeters(
+                    disconnectedAt.latitude,
+                    disconnectedAt.longitude,
+                    current.latitude,
+                    current.longitude,
+                )
             caseLostNotifier.showLostAlert(distance, lastModelName)
         }
     }
@@ -195,10 +217,11 @@ class PodsForegroundService : Service() {
         buildNotification(content = getString(R.string.fgs_notification_title))
 
     private fun updateNotification(ad: AirPodsAdvertisement?) {
-        val content = when {
-            ad == null -> getString(R.string.fgs_notification_title)
-            else -> formatBatteryContent(ad)
-        }
+        val content =
+            when {
+                ad == null -> getString(R.string.fgs_notification_title)
+                else -> formatBatteryContent(ad)
+            }
         val nm = getSystemService(android.app.NotificationManager::class.java)
         nm.notify(NOTIFICATION_ID, buildNotification(content, ad))
     }
@@ -212,31 +235,37 @@ class PodsForegroundService : Service() {
 
     private fun buildNotification(content: String): Notification = buildNotification(content, ad = null)
 
-    private fun buildNotification(content: String, ad: AirPodsAdvertisement?): Notification {
-        val openApp = PendingIntent.getActivity(
-            this,
-            0,
-            Intent(this, MainActivity::class.java),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-        val stopSelf = PendingIntent.getService(
-            this,
-            REQUEST_STOP,
-            Intent(this, PodsForegroundService::class.java).apply { action = ACTION_STOP },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
+    private fun buildNotification(
+        content: String,
+        ad: AirPodsAdvertisement?,
+    ): Notification {
+        val openApp =
+            PendingIntent.getActivity(
+                this,
+                0,
+                Intent(this, MainActivity::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        val stopSelf =
+            PendingIntent.getService(
+                this,
+                REQUEST_STOP,
+                Intent(this, PodsForegroundService::class.java).apply { action = ACTION_STOP },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
 
         // 알림바 동적 % 아이콘 (좌/우 중 낮은 쪽 표시) — AndroPods 차용
-        val iconPercent = ad?.let {
-            val l = it.leftBatteryPercent
-            val r = it.rightBatteryPercent
-            when {
-                l < 0 && r < 0 -> -1
-                l < 0 -> r
-                r < 0 -> l
-                else -> minOf(l, r)
-            }
-        } ?: -1
+        val iconPercent =
+            ad?.let {
+                val l = it.leftBatteryPercent
+                val r = it.rightBatteryPercent
+                when {
+                    l < 0 && r < 0 -> -1
+                    l < 0 -> r
+                    r < 0 -> l
+                    else -> minOf(l, r)
+                }
+            } ?: -1
 
         val builder = NotificationCompat.Builder(this, GalaxyPodsApp.CHANNEL_FGS)
         if (ad != null) {

@@ -18,37 +18,36 @@ import com.galaxypods.companion.domain.model.AirPodsModel
  * 미식별 Device Type은 `UNKNOWN`으로 폴백. 새 모델 출시 시 본 테이블에 추가.
  */
 object AirPodsModelTable {
-
-    private val table: Map<Int, AirPodsModel> = mapOf(
-        // ============================================================
-        // AirPods 시리즈
-        // ============================================================
-        0x200F to AirPodsModel.AIRPODS_2,
-        0x2013 to AirPodsModel.AIRPODS_3,
-        0x2019 to AirPodsModel.AIRPODS_4,
-        0x201B to AirPodsModel.AIRPODS_4_ANC,
-        0x200E to AirPodsModel.AIRPODS_PRO_1,
-        0x2014 to AirPodsModel.AIRPODS_PRO_2_LIGHTNING,
-        0x2024 to AirPodsModel.AIRPODS_PRO_2_USBC,
-        // AIRPODS_PRO_3 키는 실측 dump 확보 후 추가
-        0x200A to AirPodsModel.AIRPODS_MAX_LIGHTNING,
-        // AIRPODS_MAX_USBC 키는 실측 dump 확보 후 추가
-
-        // ============================================================
-        // Beats 시리즈 (Apple 인수, 동일 0x004C 광고 포맷)
-        // ============================================================
-        0x2005 to AirPodsModel.POWERBEATS_3,
-        0x200B to AirPodsModel.POWERBEATS_PRO,
-        0x2003 to AirPodsModel.BEATS_SOLO_3,
-        0x200C to AirPodsModel.BEATS_SOLO_PRO,
-        0x2025 to AirPodsModel.BEATS_SOLO_4,
-        0x2009 to AirPodsModel.BEATS_STUDIO_3,
-        0x2017 to AirPodsModel.BEATS_STUDIO_PRO,
-        0x2011 to AirPodsModel.BEATS_STUDIO_BUDS,
-        0x201E to AirPodsModel.BEATS_STUDIO_BUDS_PLUS,
-        0x2012 to AirPodsModel.BEATS_FIT_PRO,
-        0x200D to AirPodsModel.BEATS_FLEX,
-    )
+    private val table: Map<Int, AirPodsModel> =
+        mapOf(
+            // ============================================================
+            // AirPods 시리즈
+            // ============================================================
+            0x200F to AirPodsModel.AIRPODS_2,
+            0x2013 to AirPodsModel.AIRPODS_3,
+            0x2019 to AirPodsModel.AIRPODS_4,
+            0x201B to AirPodsModel.AIRPODS_4_ANC,
+            0x200E to AirPodsModel.AIRPODS_PRO_1,
+            0x2014 to AirPodsModel.AIRPODS_PRO_2_LIGHTNING,
+            0x2024 to AirPodsModel.AIRPODS_PRO_2_USBC,
+            // AIRPODS_PRO_3 키는 실측 dump 확보 후 추가
+            0x200A to AirPodsModel.AIRPODS_MAX_LIGHTNING,
+            // AIRPODS_MAX_USBC 키는 실측 dump 확보 후 추가
+            // ============================================================
+            // Beats 시리즈 (Apple 인수, 동일 0x004C 광고 포맷)
+            // ============================================================
+            0x2005 to AirPodsModel.POWERBEATS_3,
+            0x200B to AirPodsModel.POWERBEATS_PRO,
+            0x2003 to AirPodsModel.BEATS_SOLO_3,
+            0x200C to AirPodsModel.BEATS_SOLO_PRO,
+            0x2025 to AirPodsModel.BEATS_SOLO_4,
+            0x2009 to AirPodsModel.BEATS_STUDIO_3,
+            0x2017 to AirPodsModel.BEATS_STUDIO_PRO,
+            0x2011 to AirPodsModel.BEATS_STUDIO_BUDS,
+            0x201E to AirPodsModel.BEATS_STUDIO_BUDS_PLUS,
+            0x2012 to AirPodsModel.BEATS_FIT_PRO,
+            0x200D to AirPodsModel.BEATS_FLEX,
+        )
 
     /**
      * Device Type 2바이트(int 표현)로 모델 식별.

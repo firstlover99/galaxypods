@@ -16,18 +16,20 @@ import javax.inject.Singleton
  * 호출. 영속화된 스냅샷은 다음 위젯 onUpdate에서도 사용 (Activity 재시작 후에도 표시).
  */
 @Singleton
-class AppWidgetUpdater @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val preferences: AppPreferences,
-) {
-    /**
-     * 새 광고 → 위젯 갱신 + DataStore 영속화.
-     *
-     * @return 영속화에 성공했는지 (호출자가 await 필요 시).
-     */
-    suspend fun onAdvertisement(ad: AirPodsAdvertisement) {
-        val snapshot = WidgetSnapshot.fromAdvertisement(ad)
-        preferences.setWidgetSnapshot(snapshot)
-        PodsAppWidgetProvider.pushUpdate(context, snapshot)
+class AppWidgetUpdater
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+        private val preferences: AppPreferences,
+    ) {
+        /**
+         * 새 광고 → 위젯 갱신 + DataStore 영속화.
+         *
+         * @return 영속화에 성공했는지 (호출자가 await 필요 시).
+         */
+        suspend fun onAdvertisement(ad: AirPodsAdvertisement) {
+            val snapshot = WidgetSnapshot.fromAdvertisement(ad)
+            preferences.setWidgetSnapshot(snapshot)
+            PodsAppWidgetProvider.pushUpdate(context, snapshot)
+        }
     }
-}

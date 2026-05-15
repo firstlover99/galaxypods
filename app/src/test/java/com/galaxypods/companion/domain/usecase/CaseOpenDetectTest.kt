@@ -9,11 +9,12 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 class CaseOpenDetectTest {
-
     private lateinit var useCase: CaseOpenDetect
 
     @BeforeEach
-    fun setUp() { useCase = CaseOpenDetect() }
+    fun setUp() {
+        useCase = CaseOpenDetect()
+    }
 
     @Test
     @DisplayName("첫 광고는 기준선만, 트리거 X")
@@ -97,16 +98,17 @@ class CaseOpenDetectTest {
         assertThat(triggered).isFalse()
     }
 
-    private fun adWith(lidOpen: Int): AirPodsAdvertisement = AirPodsAdvertisement(
-        model = AirPodsModel.AIRPODS_PRO_2_USBC,
-        leftBatteryPercent = 80,
-        rightBatteryPercent = 80,
-        caseBatteryPercent = 80,
-        leftInEar = false,
-        rightInEar = false,
-        leftCharging = false,
-        rightCharging = false,
-        caseCharging = false,
-        lidOpenCount = lidOpen,
-    )
+    private fun adWith(lidOpen: Int): AirPodsAdvertisement =
+        AirPodsAdvertisement(
+            model = AirPodsModel.AIRPODS_PRO_2_USBC,
+            leftBatteryPercent = 80,
+            rightBatteryPercent = 80,
+            caseBatteryPercent = 80,
+            leftInEar = false,
+            rightInEar = false,
+            leftCharging = false,
+            rightCharging = false,
+            caseCharging = false,
+            lidOpenCount = lidOpen,
+        )
 }

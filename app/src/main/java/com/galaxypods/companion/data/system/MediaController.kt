@@ -24,32 +24,38 @@ import javax.inject.Singleton
  * 미디어 세션을 직접 발행해야 할 때는 별도 `MediaSessionPublisher`로 분리.
  */
 @Singleton
-class MediaController @Inject constructor(
-    @ApplicationContext private val context: Context,
-) {
-    private val audioManager: AudioManager
-        get() = context.getSystemService(AudioManager::class.java)
+class MediaController
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+    ) {
+        private val audioManager: AudioManager
+            get() = context.getSystemService(AudioManager::class.java)
 
-    /** 음악이 활성 재생 중인지 여부. 귀감지 분기에 사용. */
-    val isMusicActive: Boolean
-        get() = audioManager.isMusicActive
+        /** 음악이 활성 재생 중인지 여부. 귀감지 분기에 사용. */
+        val isMusicActive: Boolean
+            get() = audioManager.isMusicActive
 
-    fun play() = dispatch(KeyEvent.KEYCODE_MEDIA_PLAY)
-    fun pause() = dispatch(KeyEvent.KEYCODE_MEDIA_PAUSE)
-    fun playPause() = dispatch(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
-    fun next() = dispatch(KeyEvent.KEYCODE_MEDIA_NEXT)
-    fun previous() = dispatch(KeyEvent.KEYCODE_MEDIA_PREVIOUS)
+        fun play() = dispatch(KeyEvent.KEYCODE_MEDIA_PLAY)
 
-    /** Google Assistant / Bixby 호출. 활성 미디어 세션 의존하지 않음. */
-    fun invokeVoiceAssistant() = dispatch(KeyEvent.KEYCODE_VOICE_ASSIST)
+        fun pause() = dispatch(KeyEvent.KEYCODE_MEDIA_PAUSE)
 
-    private fun dispatch(keyCode: Int) {
-        val time = SystemClock.uptimeMillis()
-        audioManager.dispatchMediaKeyEvent(
-            KeyEvent(time, time, KeyEvent.ACTION_DOWN, keyCode, 0),
-        )
-        audioManager.dispatchMediaKeyEvent(
-            KeyEvent(time, time, KeyEvent.ACTION_UP, keyCode, 0),
-        )
+        fun playPause() = dispatch(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
+
+        fun next() = dispatch(KeyEvent.KEYCODE_MEDIA_NEXT)
+
+        fun previous() = dispatch(KeyEvent.KEYCODE_MEDIA_PREVIOUS)
+
+        /** Google Assistant / Bixby 호출. 활성 미디어 세션 의존하지 않음. */
+        fun invokeVoiceAssistant() = dispatch(KeyEvent.KEYCODE_VOICE_ASSIST)
+
+        private fun dispatch(keyCode: Int) {
+            val time = SystemClock.uptimeMillis()
+            audioManager.dispatchMediaKeyEvent(
+                KeyEvent(time, time, KeyEvent.ACTION_DOWN, keyCode, 0),
+            )
+            audioManager.dispatchMediaKeyEvent(
+                KeyEvent(time, time, KeyEvent.ACTION_UP, keyCode, 0),
+            )
+        }
     }
-}

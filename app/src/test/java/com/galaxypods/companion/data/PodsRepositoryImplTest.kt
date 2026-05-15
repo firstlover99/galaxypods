@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Test
  * 본 테스트는 startScanning → 상태 전이, 권한 거부/어댑터 OFF 분기를 확인.
  */
 class PodsRepositoryImplTest {
-
     @Test
     @DisplayName("BleScanner ready=false 시 BLUETOOTH_OFF 상태")
     fun startScanning_whenScannerNotReady_setsBluetoothOff() {

@@ -18,12 +18,13 @@ data class WidgetSnapshot(
     val timestamp: Long,
 ) {
     companion object {
-        fun fromAdvertisement(ad: AirPodsAdvertisement): WidgetSnapshot = WidgetSnapshot(
-            model = ad.model,
-            leftBatteryPercent = ad.leftBatteryPercent,
-            rightBatteryPercent = ad.rightBatteryPercent,
-            caseBatteryPercent = ad.caseBatteryPercent,
-            timestamp = ad.timestamp.takeIf { it > 0 } ?: System.currentTimeMillis(),
-        )
+        fun fromAdvertisement(ad: AirPodsAdvertisement): WidgetSnapshot =
+            WidgetSnapshot(
+                model = ad.model,
+                leftBatteryPercent = ad.leftBatteryPercent,
+                rightBatteryPercent = ad.rightBatteryPercent,
+                caseBatteryPercent = ad.caseBatteryPercent,
+                timestamp = ad.timestamp.takeIf { it > 0 } ?: System.currentTimeMillis(),
+            )
     }
 }

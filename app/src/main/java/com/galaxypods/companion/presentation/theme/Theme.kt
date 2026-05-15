@@ -24,43 +24,46 @@ fun GalaxyPodsTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val ctx = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
+    val colorScheme =
+        when {
+            dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                val ctx = LocalContext.current
+                if (darkTheme) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
+            }
+            darkTheme -> DarkColors
+            else -> LightColors
         }
-        darkTheme -> DarkColors
-        else -> LightColors
-    }
     MaterialTheme(colorScheme = colorScheme, content = content)
 }
 
-private val LightColors = lightColorScheme(
-    primary = Color(0xFF1565C0),
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFD2E3FC),
-    onPrimaryContainer = Color(0xFF001D36),
-    secondary = Color(0xFF4CAF50),
-    onSecondary = Color.White,
-    background = Color(0xFFFAFAFA),
-    onBackground = Color(0xFF1C1B1F),
-    surface = Color.White,
-    onSurface = Color(0xFF1C1B1F),
-    surfaceVariant = Color(0xFFEEF2F6),
-    onSurfaceVariant = Color(0xFF44474F),
-)
+private val LightColors =
+    lightColorScheme(
+        primary = Color(0xFF1565C0),
+        onPrimary = Color.White,
+        primaryContainer = Color(0xFFD2E3FC),
+        onPrimaryContainer = Color(0xFF001D36),
+        secondary = Color(0xFF4CAF50),
+        onSecondary = Color.White,
+        background = Color(0xFFFAFAFA),
+        onBackground = Color(0xFF1C1B1F),
+        surface = Color.White,
+        onSurface = Color(0xFF1C1B1F),
+        surfaceVariant = Color(0xFFEEF2F6),
+        onSurfaceVariant = Color(0xFF44474F),
+    )
 
-private val DarkColors = darkColorScheme(
-    primary = Color(0xFF82B1FF),
-    onPrimary = Color(0xFF002F65),
-    primaryContainer = Color(0xFF004788),
-    onPrimaryContainer = Color(0xFFD2E3FC),
-    secondary = Color(0xFF81C784),
-    onSecondary = Color(0xFF1B3A1B),
-    background = Color(0xFF1A1C1E),
-    onBackground = Color(0xFFE3E2E6),
-    surface = Color(0xFF1A1C1E),
-    onSurface = Color(0xFFE3E2E6),
-    surfaceVariant = Color(0xFF44474F),
-    onSurfaceVariant = Color(0xFFC4C7CF),
-)
+private val DarkColors =
+    darkColorScheme(
+        primary = Color(0xFF82B1FF),
+        onPrimary = Color(0xFF002F65),
+        primaryContainer = Color(0xFF004788),
+        onPrimaryContainer = Color(0xFFD2E3FC),
+        secondary = Color(0xFF81C784),
+        onSecondary = Color(0xFF1B3A1B),
+        background = Color(0xFF1A1C1E),
+        onBackground = Color(0xFFE3E2E6),
+        surface = Color(0xFF1A1C1E),
+        onSurface = Color(0xFFE3E2E6),
+        surfaceVariant = Color(0xFF44474F),
+        onSurfaceVariant = Color(0xFFC4C7CF),
+    )

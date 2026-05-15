@@ -17,6 +17,15 @@ ij_kotlin_allow_trailing_comma_on_call_site = true
 ktlint_standard_no-wildcard-imports = enabled
 ktlint_standard_filename = enabled
 
+# Compose @Composable 함수는 PascalCase가 Material 3 공식 컨벤션.
+ktlint_standard_function-naming = disabled
+
+# backing property `_xxx` underscore prefix는 Kotlin 공식 컨벤션.
+ktlint_standard_property-naming = disabled
+
+# KDoc + // 주석 연속 허용 (검토 메타 코멘트 패턴).
+ktlint_standard_no-consecutive-comments = disabled
+
 [*.{xml,html}]
 indent_size = 4
 

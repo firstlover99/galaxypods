@@ -50,18 +50,20 @@ fun AboutScreen(onBack: () -> Unit) {
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
@@ -103,9 +105,10 @@ fun AboutScreen(onBack: () -> Unit) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                ),
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    ),
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("✓ 사용자 식별 정보 수집 안 함")
@@ -118,22 +121,30 @@ fun AboutScreen(onBack: () -> Unit) {
     }
 }
 
-private fun openUrl(context: android.content.Context, url: String) {
+private fun openUrl(
+    context: android.content.Context,
+    url: String,
+) {
     if (url.isBlank() || url == "TBD") return
-    val intent = Intent(Intent.ACTION_VIEW, url.toUri()).apply {
-        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    }
+    val intent =
+        Intent(Intent.ACTION_VIEW, url.toUri()).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
     runCatching { context.startActivity(intent) }
 }
 
 @Composable
-private fun DisclaimerCard(title: String, body: String) {
+private fun DisclaimerCard(
+    title: String,
+    body: String,
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
@@ -144,13 +155,17 @@ private fun DisclaimerCard(title: String, body: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LinkCard(title: String, onClick: () -> Unit) {
+private fun LinkCard(
+    title: String,
+    onClick: () -> Unit,
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
         onClick = onClick,
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp)) {

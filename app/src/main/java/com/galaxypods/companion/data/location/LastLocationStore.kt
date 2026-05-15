@@ -27,51 +27,56 @@ import kotlin.coroutines.resume
  * **권한 사전 검사.** 미부여 시 silent return — 사용자가 끄는 것이 가능하도록.
  */
 @Singleton
-class LastLocationStore @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val preferences: AppPreferences,
-) {
+class LastLocationStore
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+        private val preferences: AppPreferences,
+    ) {
+        /**
+         * 현재 위치를 1회 fetch해 영속화.
+         *
+         * @return 성공 시 [LastLocation], 권한 미부여 또는 위치 미사용 시 null.
+         */
+        suspend fun captureNow(): LastLocation? {
+            if (!hasLocationPermission()) return null
 
-    /**
-     * 현재 위치를 1회 fetch해 영속화.
-     *
-     * @return 성공 시 [LastLocation], 권한 미부여 또는 위치 미사용 시 null.
-     */
-    suspend fun captureNow(): LastLocation? {
-        if (!hasLocationPermission()) return null
+            val location = getCurrentLocationOrNull() ?: return null
+            val captured =
+                LastLocation(
+                    latitude = location.latitude,
+                    longitude = location.longitude,
+                    timestamp = System.currentTimeMillis(),
+                    accuracyMeters = location.accuracy.takeIf { it > 0f },
+                )
+            preferences.setLastLocation(captured)
+            return captured
+        }
 
-        val location = getCurrentLocationOrNull() ?: return null
-        val captured = LastLocation(
-            latitude = location.latitude,
-            longitude = location.longitude,
-            timestamp = System.currentTimeMillis(),
-            accuracyMeters = location.accuracy.takeIf { it > 0f },
-        )
-        preferences.setLastLocation(captured)
-        return captured
+        @SuppressLint("MissingPermission")
+        private suspend fun getCurrentLocationOrNull(): android.location.Location? {
+            val client = LocationServices.getFusedLocationProviderClient(context)
+            return runCatching {
+                client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
+            }.getOrNull()
+        }
+
+        private fun hasLocationPermission(): Boolean {
+            val fine =
+                ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.ACCESS_FINE_LOCATION,
+                ) == PackageManager.PERMISSION_GRANTED
+            val coarse =
+                ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.ACCESS_COARSE_LOCATION,
+                ) == PackageManager.PERMISSION_GRANTED
+            return fine || coarse
+        }
+
+        @Suppress("unused")
+        private suspend fun fallbackForOldDevices() =
+            suspendCancellableCoroutine<Unit> { cont ->
+                // 오래된 단말 폴백 위치는 별도 작업 — 현 구현은 Google Play Services 의존
+                cont.resume(Unit)
+            }
     }
-
-    @SuppressLint("MissingPermission")
-    private suspend fun getCurrentLocationOrNull(): android.location.Location? {
-        val client = LocationServices.getFusedLocationProviderClient(context)
-        return runCatching {
-            client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
-        }.getOrNull()
-    }
-
-    private fun hasLocationPermission(): Boolean {
-        val fine = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_FINE_LOCATION,
-        ) == PackageManager.PERMISSION_GRANTED
-        val coarse = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_COARSE_LOCATION,
-        ) == PackageManager.PERMISSION_GRANTED
-        return fine || coarse
-    }
-
-    @Suppress("unused")
-    private suspend fun fallbackForOldDevices() = suspendCancellableCoroutine<Unit> { cont ->
-        // 오래된 단말 폴백 위치는 별도 작업 — 현 구현은 Google Play Services 의존
-        cont.resume(Unit)
-    }
-}

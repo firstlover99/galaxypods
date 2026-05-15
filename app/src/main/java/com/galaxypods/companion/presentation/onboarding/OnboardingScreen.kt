@@ -46,9 +46,10 @@ fun OnboardingScreen(
     val state by viewModel.uiState.collectAsState()
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(24.dp),
     ) {
         StepProgress(step = state.step)
         Spacer(modifier = Modifier.height(24.dp))
@@ -56,29 +57,34 @@ fun OnboardingScreen(
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
             when (state.step) {
                 OnboardingStep.WELCOME -> WelcomeStep()
-                OnboardingStep.BLUETOOTH_PERMISSION -> BluetoothStep(
-                    granted = state.bluetoothGranted,
-                    onResult = viewModel::onBluetoothResult,
-                )
-                OnboardingStep.NOTIFICATION_PERMISSION -> NotificationStep(
-                    granted = state.notificationGranted,
-                    onResult = viewModel::onNotificationResult,
-                )
-                OnboardingStep.SAMSUNG_BATTERY -> SamsungBatteryStep(
-                    oneUiMajorVersion = state.oneUiMajorVersion,
-                    isIgnoring = state.ignoringBatteryOptimizations,
-                    sleepStatus = state.sleepStatus,
-                    onOpenSettings = viewModel::openSamsungBatterySettings,
-                )
-                OnboardingStep.LOCATION_OPTIONAL -> LocationStep(
-                    locationOptIn = state.locationOptIn,
-                    locationGranted = state.locationGranted,
-                    onOptInChange = viewModel::setLocationOptIn,
-                    onResult = viewModel::onLocationResult,
-                )
-                OnboardingStep.DONE -> DoneStep(onCompleted = {
-                    viewModel.completeOnboarding(onCompleted)
-                })
+                OnboardingStep.BLUETOOTH_PERMISSION ->
+                    BluetoothStep(
+                        granted = state.bluetoothGranted,
+                        onResult = viewModel::onBluetoothResult,
+                    )
+                OnboardingStep.NOTIFICATION_PERMISSION ->
+                    NotificationStep(
+                        granted = state.notificationGranted,
+                        onResult = viewModel::onNotificationResult,
+                    )
+                OnboardingStep.SAMSUNG_BATTERY ->
+                    SamsungBatteryStep(
+                        oneUiMajorVersion = state.oneUiMajorVersion,
+                        isIgnoring = state.ignoringBatteryOptimizations,
+                        sleepStatus = state.sleepStatus,
+                        onOpenSettings = viewModel::openSamsungBatterySettings,
+                    )
+                OnboardingStep.LOCATION_OPTIONAL ->
+                    LocationStep(
+                        locationOptIn = state.locationOptIn,
+                        locationGranted = state.locationGranted,
+                        onOptInChange = viewModel::setLocationOptIn,
+                        onResult = viewModel::onLocationResult,
+                    )
+                OnboardingStep.DONE ->
+                    DoneStep(onCompleted = {
+                        viewModel.completeOnboarding(onCompleted)
+                    })
             }
         }
 
@@ -141,11 +147,12 @@ private fun NavigationRow(
 private fun WelcomeStep() {
     StepContent(
         title = "GalaxyPods에 오신 걸 환영합니다",
-        body = listOf(
-            "Galaxy 단말에서 무선 이어폰을 더 편하게 쓸 수 있도록 5단계 설정을 안내합니다.",
-            "권한은 모두 사용자가 직접 선택하며, 언제든 끌 수 있습니다.",
-            "본 앱은 사용자 데이터를 외부 서버로 전송하지 않습니다.",
-        ),
+        body =
+            listOf(
+                "Galaxy 단말에서 무선 이어폰을 더 편하게 쓸 수 있도록 5단계 설정을 안내합니다.",
+                "권한은 모두 사용자가 직접 선택하며, 언제든 끌 수 있습니다.",
+                "본 앱은 사용자 데이터를 외부 서버로 전송하지 않습니다.",
+            ),
     )
 }
 
@@ -154,37 +161,44 @@ private fun WelcomeStep() {
 // ============================================================
 
 @Composable
-private fun BluetoothStep(granted: Boolean, onResult: (Boolean) -> Unit) {
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { results ->
-        onResult(results.values.all { it })
-    }
+private fun BluetoothStep(
+    granted: Boolean,
+    onResult: (Boolean) -> Unit,
+) {
+    val launcher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions(),
+        ) { results ->
+            onResult(results.values.all { it })
+        }
 
     StepContent(
         title = "Bluetooth 권한",
-        body = listOf(
-            "이어폰의 신호를 받기 위해 Bluetooth 권한이 필요합니다.",
-            "위치 정보 사용 안 함(neverForLocation) 플래그가 부착되어, " +
-                "Bluetooth 스캔으로 위치를 추정할 수 없습니다.",
-        ),
-        action = if (granted) {
-            { Text("✅ 허용됨", style = MaterialTheme.typography.titleMedium) }
-        } else {
-            {
-                Button(onClick = {
-                    val perms = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        arrayOf(
-                            Manifest.permission.BLUETOOTH_SCAN,
-                            Manifest.permission.BLUETOOTH_CONNECT,
-                        )
-                    } else {
-                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-                    }
-                    launcher.launch(perms)
-                }) { Text("권한 요청") }
-            }
-        },
+        body =
+            listOf(
+                "이어폰의 신호를 받기 위해 Bluetooth 권한이 필요합니다.",
+                "위치 정보 사용 안 함(neverForLocation) 플래그가 부착되어, " +
+                    "Bluetooth 스캔으로 위치를 추정할 수 없습니다.",
+            ),
+        action =
+            if (granted) {
+                { Text("✅ 허용됨", style = MaterialTheme.typography.titleMedium) }
+            } else {
+                {
+                    Button(onClick = {
+                        val perms =
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                arrayOf(
+                                    Manifest.permission.BLUETOOTH_SCAN,
+                                    Manifest.permission.BLUETOOTH_CONNECT,
+                                )
+                            } else {
+                                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+                            }
+                        launcher.launch(perms)
+                    }) { Text("권한 요청") }
+                }
+            },
     )
 }
 
@@ -193,26 +207,32 @@ private fun BluetoothStep(granted: Boolean, onResult: (Boolean) -> Unit) {
 // ============================================================
 
 @Composable
-private fun NotificationStep(granted: Boolean, onResult: (Boolean) -> Unit) {
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { onResult(it) }
+private fun NotificationStep(
+    granted: Boolean,
+    onResult: (Boolean) -> Unit,
+) {
+    val launcher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+        ) { onResult(it) }
 
     StepContent(
         title = "알림 권한",
-        body = listOf(
-            "케이스 오픈 알림과 배터리 경고를 표시하려면 알림 권한이 필요합니다.",
-            "광고성 알림은 보내지 않습니다.",
-        ),
-        action = if (granted || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            { Text("✅ 허용됨 (또는 자동 허용)", style = MaterialTheme.typography.titleMedium) }
-        } else {
-            {
-                Button(onClick = {
-                    launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }) { Text("권한 요청") }
-            }
-        },
+        body =
+            listOf(
+                "케이스 오픈 알림과 배터리 경고를 표시하려면 알림 권한이 필요합니다.",
+                "광고성 알림은 보내지 않습니다.",
+            ),
+        action =
+            if (granted || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                { Text("✅ 허용됨 (또는 자동 허용)", style = MaterialTheme.typography.titleMedium) }
+            } else {
+                {
+                    Button(onClick = {
+                        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }) { Text("권한 요청") }
+                }
+            },
     )
 }
 
@@ -227,22 +247,27 @@ private fun SamsungBatteryStep(
     sleepStatus: SamsungQuirks.SleepStatus,
     onOpenSettings: () -> Unit,
 ) {
-    val guidance = when {
-        oneUiMajorVersion == null -> "Samsung 단말이 아닙니다. 이 단계를 건너뛰셔도 됩니다."
-        oneUiMajorVersion >= 6 -> "One UI $oneUiMajorVersion 단말입니다. " +
-            "아래 버튼으로 절전 예외 화면이 자동으로 열립니다. " +
-            "GalaxyPods를 \"절전 안 함\"으로 등록해 주세요."
-        oneUiMajorVersion == 5 -> "One UI 5 단말입니다. 설정 → 디바이스 케어 → 배터리 → " +
-            "백그라운드 사용 한도 → 절전 안 함 앱 → GalaxyPods 추가."
-        else -> "One UI ${oneUiMajorVersion ?: "?"} 단말입니다. " +
-            "설정 → 디바이스 관리 → 배터리에서 절전 예외에 GalaxyPods를 추가해 주세요."
-    }
-    val sleepNote = when (sleepStatus) {
-        SamsungQuirks.SleepStatus.SLEEPING -> "⚠️ 현재 앱이 SLEEPING 버킷에 있습니다. 절전 예외 등록 권장."
-        SamsungQuirks.SleepStatus.NORMAL -> "✓ 앱이 정상 버킷에 있습니다."
-        SamsungQuirks.SleepStatus.ACTIVE -> "✓ 앱이 ACTIVE 상태입니다."
-        SamsungQuirks.SleepStatus.UNKNOWN -> ""
-    }
+    val guidance =
+        when {
+            oneUiMajorVersion == null -> "Samsung 단말이 아닙니다. 이 단계를 건너뛰셔도 됩니다."
+            oneUiMajorVersion >= 6 ->
+                "One UI $oneUiMajorVersion 단말입니다. " +
+                    "아래 버튼으로 절전 예외 화면이 자동으로 열립니다. " +
+                    "GalaxyPods를 \"절전 안 함\"으로 등록해 주세요."
+            oneUiMajorVersion == 5 ->
+                "One UI 5 단말입니다. 설정 → 디바이스 케어 → 배터리 → " +
+                    "백그라운드 사용 한도 → 절전 안 함 앱 → GalaxyPods 추가."
+            else ->
+                "One UI ${oneUiMajorVersion ?: "?"} 단말입니다. " +
+                    "설정 → 디바이스 관리 → 배터리에서 절전 예외에 GalaxyPods를 추가해 주세요."
+        }
+    val sleepNote =
+        when (sleepStatus) {
+            SamsungQuirks.SleepStatus.SLEEPING -> "⚠️ 현재 앱이 SLEEPING 버킷에 있습니다. 절전 예외 등록 권장."
+            SamsungQuirks.SleepStatus.NORMAL -> "✓ 앱이 정상 버킷에 있습니다."
+            SamsungQuirks.SleepStatus.ACTIVE -> "✓ 앱이 ACTIVE 상태입니다."
+            SamsungQuirks.SleepStatus.UNKNOWN -> ""
+        }
     val ignoringNote = if (isIgnoring) "✓ 배터리 최적화 예외 등록됨" else "⚠️ 배터리 최적화 예외 미등록"
 
     StepContent(
@@ -267,17 +292,19 @@ private fun LocationStep(
     onOptInChange: (Boolean) -> Unit,
     onResult: (Boolean) -> Unit,
 ) {
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { onResult(it) }
+    val launcher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+        ) { onResult(it) }
 
     StepContent(
         title = "마지막 위치 기록 (선택)",
-        body = listOf(
-            "이어폰과의 연결이 끊긴 마지막 위치를 한 번만 기록해 분실 방지를 돕습니다.",
-            "백그라운드에서 위치를 지속적으로 추적하지 않으며, 단말 안에만 저장됩니다.",
-            "이 기능은 켜지 않아도 다른 모든 기능이 정상 동작합니다.",
-        ),
+        body =
+            listOf(
+                "이어폰과의 연결이 끊긴 마지막 위치를 한 번만 기록해 분실 방지를 돕습니다.",
+                "백그라운드에서 위치를 지속적으로 추적하지 않으며, 단말 안에만 저장됩니다.",
+                "이 기능은 켜지 않아도 다른 모든 기능이 정상 동작합니다.",
+            ),
         action = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -302,10 +329,11 @@ private fun LocationStep(
 private fun DoneStep(onCompleted: () -> Unit) {
     StepContent(
         title = "준비 완료",
-        body = listOf(
-            "이제 AirPods 케이스를 열어보세요. 배터리 정보가 자동으로 표시됩니다.",
-            "설정은 메인 화면 우상단에서 언제든 변경할 수 있습니다.",
-        ),
+        body =
+            listOf(
+                "이제 AirPods 케이스를 열어보세요. 배터리 정보가 자동으로 표시됩니다.",
+                "설정은 메인 화면 우상단에서 언제든 변경할 수 있습니다.",
+            ),
         action = {
             Button(onClick = onCompleted) {
                 Text("시작하기")
@@ -327,14 +355,16 @@ private fun StepContent(
     Card(
         modifier = Modifier.fillMaxSize(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
@@ -354,4 +384,3 @@ private fun StepContent(
         }
     }
 }
-

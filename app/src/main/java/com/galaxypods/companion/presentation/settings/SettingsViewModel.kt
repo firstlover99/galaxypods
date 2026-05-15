@@ -37,86 +37,96 @@ data class SettingsUiState(
  * Samsung 절전 예외 등록 화면 직접 열기도 노출.
  */
 @HiltViewModel
-class SettingsViewModel @Inject constructor(
-    private val preferences: AppPreferences,
-    private val autoPlayPause: AutoPlayPause,
-    private val voiceAnnouncer: VoiceAnnouncer,
-    private val caseLostDetect: CaseLostDetect,
-    private val caseOpenDetect: CaseOpenDetect,
-    private val crashReporter: CrashReporter,
-    private val samsungQuirks: SamsungQuirks,
-) : ViewModel() {
+class SettingsViewModel
+    @Inject
+    constructor(
+        private val preferences: AppPreferences,
+        private val autoPlayPause: AutoPlayPause,
+        private val voiceAnnouncer: VoiceAnnouncer,
+        private val caseLostDetect: CaseLostDetect,
+        private val caseOpenDetect: CaseOpenDetect,
+        private val crashReporter: CrashReporter,
+        private val samsungQuirks: SamsungQuirks,
+    ) : ViewModel() {
+        val uiState: StateFlow<SettingsUiState> =
+            combine(
+                preferences.autoPauseEnabled,
+                preferences.autoPauseMode,
+                preferences.voiceAnnouncerEnabled,
+                preferences.voiceAnnouncerThreshold,
+                combine(
+                    preferences.locationRecordEnabled,
+                    preferences.caseLostAlertEnabled,
+                    preferences.crashlyticsOptIn,
+                ) { loc, lost, crash -> Triple(loc, lost, crash) },
+            ) { autoPause, mode, voice, threshold, group ->
+                SettingsUiState(
+                    autoPauseEnabled = autoPause,
+                    autoPauseMode = mode,
+                    voiceEnabled = voice,
+                    voiceThreshold = threshold,
+                    locationEnabled = group.first,
+                    caseLostEnabled = group.second,
+                    crashlyticsOptIn = group.third,
+                    isSamsung = samsungQuirks.isSamsungDevice,
+                    ignoringBatteryOptimizations = samsungQuirks.isIgnoringBatteryOptimizations(),
+                )
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue =
+                    SettingsUiState(
+                        isSamsung = samsungQuirks.isSamsungDevice,
+                    ),
+            )
 
-    val uiState: StateFlow<SettingsUiState> = combine(
-        preferences.autoPauseEnabled,
-        preferences.autoPauseMode,
-        preferences.voiceAnnouncerEnabled,
-        preferences.voiceAnnouncerThreshold,
-        combine(
-            preferences.locationRecordEnabled,
-            preferences.caseLostAlertEnabled,
-            preferences.crashlyticsOptIn,
-        ) { loc, lost, crash -> Triple(loc, lost, crash) },
-    ) { autoPause, mode, voice, threshold, group ->
-        SettingsUiState(
-            autoPauseEnabled = autoPause,
-            autoPauseMode = mode,
-            voiceEnabled = voice,
-            voiceThreshold = threshold,
-            locationEnabled = group.first,
-            caseLostEnabled = group.second,
-            crashlyticsOptIn = group.third,
-            isSamsung = samsungQuirks.isSamsungDevice,
-            ignoringBatteryOptimizations = samsungQuirks.isIgnoringBatteryOptimizations(),
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = SettingsUiState(
-            isSamsung = samsungQuirks.isSamsungDevice,
-        ),
-    )
+        fun setAutoPauseEnabled(value: Boolean) =
+            viewModelScope.launch {
+                preferences.setAutoPauseEnabled(value)
+                autoPlayPause.enabled = value
+                if (!value) autoPlayPause.reset()
+            }
 
-    fun setAutoPauseEnabled(value: Boolean) = viewModelScope.launch {
-        preferences.setAutoPauseEnabled(value)
-        autoPlayPause.enabled = value
-        if (!value) autoPlayPause.reset()
+        fun setAutoPauseMode(mode: AutoPlayPause.Mode) =
+            viewModelScope.launch {
+                preferences.setAutoPauseMode(mode)
+                autoPlayPause.mode = mode
+            }
+
+        fun setVoiceEnabled(value: Boolean) =
+            viewModelScope.launch {
+                preferences.setVoiceAnnouncerEnabled(value)
+                voiceAnnouncer.enabled = value
+            }
+
+        fun setVoiceThreshold(value: Int) =
+            viewModelScope.launch {
+                preferences.setVoiceAnnouncerThreshold(value)
+                voiceAnnouncer.thresholdPercent = value
+            }
+
+        fun setLocationEnabled(value: Boolean) =
+            viewModelScope.launch {
+                preferences.setLocationRecordEnabled(value)
+            }
+
+        fun setCaseLostEnabled(value: Boolean) =
+            viewModelScope.launch {
+                preferences.setCaseLostAlertEnabled(value)
+                caseLostDetect.enabled = value
+            }
+
+        fun setCaseOpenEnabled(value: Boolean) {
+            caseOpenDetect.enabled = value
+        }
+
+        fun setCrashlyticsOptIn(value: Boolean) =
+            viewModelScope.launch {
+                preferences.setCrashlyticsOptIn(value)
+                crashReporter.setEnabled(value)
+            }
+
+        fun openSamsungBatterySettings() {
+            samsungQuirks.openBatteryOptimizationSettings()
+        }
     }
-
-    fun setAutoPauseMode(mode: AutoPlayPause.Mode) = viewModelScope.launch {
-        preferences.setAutoPauseMode(mode)
-        autoPlayPause.mode = mode
-    }
-
-    fun setVoiceEnabled(value: Boolean) = viewModelScope.launch {
-        preferences.setVoiceAnnouncerEnabled(value)
-        voiceAnnouncer.enabled = value
-    }
-
-    fun setVoiceThreshold(value: Int) = viewModelScope.launch {
-        preferences.setVoiceAnnouncerThreshold(value)
-        voiceAnnouncer.thresholdPercent = value
-    }
-
-    fun setLocationEnabled(value: Boolean) = viewModelScope.launch {
-        preferences.setLocationRecordEnabled(value)
-    }
-
-    fun setCaseLostEnabled(value: Boolean) = viewModelScope.launch {
-        preferences.setCaseLostAlertEnabled(value)
-        caseLostDetect.enabled = value
-    }
-
-    fun setCaseOpenEnabled(value: Boolean) {
-        caseOpenDetect.enabled = value
-    }
-
-    fun setCrashlyticsOptIn(value: Boolean) = viewModelScope.launch {
-        preferences.setCrashlyticsOptIn(value)
-        crashReporter.setEnabled(value)
-    }
-
-    fun openSamsungBatterySettings() {
-        samsungQuirks.openBatteryOptimizationSettings()
-    }
-}

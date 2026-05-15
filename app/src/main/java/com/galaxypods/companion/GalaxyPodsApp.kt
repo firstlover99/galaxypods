@@ -9,7 +9,6 @@ import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
 class GalaxyPodsApp : Application() {
-
     override fun onCreate() {
         super.onCreate()
         createNotificationChannels()
@@ -20,27 +19,29 @@ class GalaxyPodsApp : Application() {
 
         val nm = getSystemService(NotificationManager::class.java)
 
-        val fgsChannel = NotificationChannel(
-            CHANNEL_FGS,
-            getString(R.string.fgs_channel_name),
-            NotificationManager.IMPORTANCE_LOW,
-        ).apply {
-            description = getString(R.string.fgs_channel_desc)
-            setShowBadge(false)
-        }
+        val fgsChannel =
+            NotificationChannel(
+                CHANNEL_FGS,
+                getString(R.string.fgs_channel_name),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = getString(R.string.fgs_channel_desc)
+                setShowBadge(false)
+            }
         nm.createNotificationChannel(fgsChannel)
 
         // 케이스 오픈 풀스크린 알림 (v1.0 SYSTEM_ALERT_WINDOW 대체)
-        val caseChannel = NotificationChannel(
-            CHANNEL_CASE_OPEN,
-            getString(R.string.case_open_channel_name),
-            NotificationManager.IMPORTANCE_HIGH,
-        ).apply {
-            description = getString(R.string.case_open_channel_desc)
-            setShowBadge(false)
-            enableVibration(true)
-            enableLights(true)
-        }
+        val caseChannel =
+            NotificationChannel(
+                CHANNEL_CASE_OPEN,
+                getString(R.string.case_open_channel_name),
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = getString(R.string.case_open_channel_desc)
+                setShowBadge(false)
+                enableVibration(true)
+                enableLights(true)
+            }
         nm.createNotificationChannel(caseChannel)
     }
 

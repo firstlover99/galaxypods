@@ -24,58 +24,63 @@ import javax.inject.Singleton
  * heads-up 알림으로 자동 폴백 (시스템 처리).
  */
 @Singleton
-class CaseOpenNotifier @Inject constructor(
-    @ApplicationContext private val context: Context,
-) {
-    fun showCaseOpenAlert(ad: AirPodsAdvertisement) {
-        val nm = context.getSystemService(NotificationManager::class.java) ?: return
+class CaseOpenNotifier
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+    ) {
+        fun showCaseOpenAlert(ad: AirPodsAdvertisement) {
+            val nm = context.getSystemService(NotificationManager::class.java) ?: return
 
-        val openApp = PendingIntent.getActivity(
-            context,
-            REQUEST_OPEN,
-            Intent(context, MainActivity::class.java),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
+            val openApp =
+                PendingIntent.getActivity(
+                    context,
+                    REQUEST_OPEN,
+                    Intent(context, MainActivity::class.java),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
 
-        val notification = NotificationCompat.Builder(context, GalaxyPodsApp.CHANNEL_CASE_OPEN)
-            .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
-            .setContentTitle(ad.model.displayName)
-            .setContentText(formatBatteryShort(ad))
-            .setStyle(NotificationCompat.BigTextStyle().bigText(formatBatteryDetailed(ad)))
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_STATUS)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setAutoCancel(true)
-            .setTimeoutAfter(AUTO_DISMISS_MS)
-            .setContentIntent(openApp)
-            .setFullScreenIntent(openApp, /* highPriority = */ true)
-            .build()
+            val notification =
+                NotificationCompat.Builder(context, GalaxyPodsApp.CHANNEL_CASE_OPEN)
+                    .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
+                    .setContentTitle(ad.model.displayName)
+                    .setContentText(formatBatteryShort(ad))
+                    .setStyle(NotificationCompat.BigTextStyle().bigText(formatBatteryDetailed(ad)))
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setCategory(NotificationCompat.CATEGORY_STATUS)
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    .setAutoCancel(true)
+                    .setTimeoutAfter(AUTO_DISMISS_MS)
+                    .setContentIntent(openApp)
+                    // highPriority = true (heads-up + 풀스크린)
+                    .setFullScreenIntent(openApp, true)
+                    .build()
 
-        nm.notify(NOTIFICATION_ID, notification)
+            nm.notify(NOTIFICATION_ID, notification)
+        }
+
+        private fun formatBatteryShort(ad: AirPodsAdvertisement): String {
+            val l = ad.leftBatteryPercent.takeIf { it >= 0 }?.let { "L $it%" } ?: "L —"
+            val r = ad.rightBatteryPercent.takeIf { it >= 0 }?.let { "R $it%" } ?: "R —"
+            val c = ad.caseBatteryPercent.takeIf { it >= 0 }?.let { "📦 $it%" } ?: "📦 —"
+            return "$l   $r   $c"
+        }
+
+        private fun formatBatteryDetailed(ad: AirPodsAdvertisement): String =
+            buildString {
+                appendLine(ad.model.displayName)
+                appendLine()
+                appendLine("왼쪽. ${formatPercent(ad.leftBatteryPercent)}")
+                appendLine("오른쪽. ${formatPercent(ad.rightBatteryPercent)}")
+                append("케이스. ${formatPercent(ad.caseBatteryPercent)}")
+                if (ad.caseCharging) append(" (충전 중)")
+            }
+
+        private fun formatPercent(percent: Int): String = if (percent < 0) "—" else "$percent%"
+
+        companion object {
+            const val NOTIFICATION_ID: Int = 2001
+            const val REQUEST_OPEN: Int = 200
+            const val AUTO_DISMISS_MS: Long = 5_000L
+        }
     }
-
-    private fun formatBatteryShort(ad: AirPodsAdvertisement): String {
-        val l = ad.leftBatteryPercent.takeIf { it >= 0 }?.let { "L $it%" } ?: "L —"
-        val r = ad.rightBatteryPercent.takeIf { it >= 0 }?.let { "R $it%" } ?: "R —"
-        val c = ad.caseBatteryPercent.takeIf { it >= 0 }?.let { "📦 $it%" } ?: "📦 —"
-        return "$l   $r   $c"
-    }
-
-    private fun formatBatteryDetailed(ad: AirPodsAdvertisement): String = buildString {
-        appendLine(ad.model.displayName)
-        appendLine()
-        appendLine("왼쪽. ${formatPercent(ad.leftBatteryPercent)}")
-        appendLine("오른쪽. ${formatPercent(ad.rightBatteryPercent)}")
-        append("케이스. ${formatPercent(ad.caseBatteryPercent)}")
-        if (ad.caseCharging) append(" (충전 중)")
-    }
-
-    private fun formatPercent(percent: Int): String =
-        if (percent < 0) "—" else "$percent%"
-
-    companion object {
-        const val NOTIFICATION_ID: Int = 2001
-        const val REQUEST_OPEN: Int = 200
-        const val AUTO_DISMISS_MS: Long = 5_000L
-    }
-}

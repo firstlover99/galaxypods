@@ -16,22 +16,16 @@ data class ParserConfig(
     val version: String = "v1.0-design-doc",
     val proximityPairingType: Int = TYPE_PROXIMITY_PAIRING,
     val expectedLength: Int = LENGTH_PROXIMITY_PAIRING,
-
     /** Device Type 2바이트 시작 오프셋 (big-endian). */
     val deviceTypeOffset: Int = 0,
-
     /** in-ear 비트 플래그가 있는 바이트 오프셋. left=bit3, right=bit1. */
     val inEarOffset: Int = 3,
-
     /** 배터리 1바이트(상위 4비트=right, 하위 4비트=left, 0~15). */
     val battery1Offset: Int = 5,
-
     /** 배터리 2바이트(하위 4비트=case, 상위 4비트=예약/충전). */
     val battery2Offset: Int = 6,
-
     /** 충전 플래그 바이트. bit0=right, bit1=left, bit2=case. */
     val chargingOffset: Int = 7,
-
     /** 케이스 lid open 카운터(0~255). 변화량으로 케이스 오픈 감지. */
     val lidOpenOffset: Int = 8,
 ) {

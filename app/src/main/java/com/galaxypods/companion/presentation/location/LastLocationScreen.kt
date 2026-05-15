@@ -4,7 +4,6 @@ package com.galaxypods.companion.presentation.location
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -55,9 +54,10 @@ fun LastLocationScreen(
     val location by viewModel.lastLocation.collectAsState()
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
@@ -83,14 +83,16 @@ private fun EmptyStateCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -99,8 +101,9 @@ private fun EmptyStateCard() {
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
-                text = "이어폰과의 연결이 끊기는 시점에 한 번 위치를 기록합니다. " +
-                    "설정에서 \"마지막 위치 기록\"을 켜고 위치 권한을 허용하세요.",
+                text =
+                    "이어폰과의 연결이 끊기는 시점에 한 번 위치를 기록합니다. " +
+                        "설정에서 \"마지막 위치 기록\"을 켜고 위치 권한을 허용하세요.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -111,31 +114,35 @@ private fun EmptyStateCard() {
 @Composable
 private fun MapCard(location: LastLocation) {
     val target = LatLng(location.latitude, location.longitude)
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(target, MAP_ZOOM)
-    }
+    val cameraPositionState =
+        rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(target, MAP_ZOOM)
+        }
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(300.dp)
-            .clip(RoundedCornerShape(16.dp)),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(300.dp)
+                .clip(RoundedCornerShape(16.dp)),
     ) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
-            properties = MapProperties(
-                mapType = MapType.NORMAL,
-                isMyLocationEnabled = false,
-                isIndoorEnabled = false,
-            ),
-            uiSettings = MapUiSettings(
-                zoomControlsEnabled = false,
-                compassEnabled = false,
-                myLocationButtonEnabled = false,
-                rotationGesturesEnabled = false,
-                tiltGesturesEnabled = false,
-            ),
+            properties =
+                MapProperties(
+                    mapType = MapType.NORMAL,
+                    isMyLocationEnabled = false,
+                    isIndoorEnabled = false,
+                ),
+            uiSettings =
+                MapUiSettings(
+                    zoomControlsEnabled = false,
+                    compassEnabled = false,
+                    myLocationButtonEnabled = false,
+                    rotationGesturesEnabled = false,
+                    tiltGesturesEnabled = false,
+                ),
         ) {
             Marker(
                 state = MarkerState(position = target),
@@ -150,14 +157,16 @@ private fun DetailCard(location: LastLocation) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(text = "기록 시각. ${formatTimestamp(location.timestamp)}")
@@ -177,7 +186,10 @@ private fun DetailCard(location: LastLocation) {
 }
 
 @Composable
-private fun ActionRow(onClear: () -> Unit, onBack: () -> Unit) {
+private fun ActionRow(
+    onClear: () -> Unit,
+    onBack: () -> Unit,
+) {
     Box(modifier = Modifier.fillMaxWidth()) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = onClear, modifier = Modifier.fillMaxWidth()) {

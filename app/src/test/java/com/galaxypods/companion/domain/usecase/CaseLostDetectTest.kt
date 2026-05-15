@@ -8,7 +8,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 class CaseLostDetectTest {
-
     private lateinit var useCase: CaseLostDetect
 
     @BeforeEach
@@ -28,10 +27,13 @@ class CaseLostDetectTest {
     fun haversine_seoulCityHallToGwanghwamun_approx800m() {
         val cityHall = Pair(37.5665, 126.9780)
         val gwanghwamun = Pair(37.5759, 126.9769)
-        val d = useCase.haversineMeters(
-            cityHall.first, cityHall.second,
-            gwanghwamun.first, gwanghwamun.second,
-        )
+        val d =
+            useCase.haversineMeters(
+                cityHall.first,
+                cityHall.second,
+                gwanghwamun.first,
+                gwanghwamun.second,
+            )
         assertThat(d).isWithin(50.0).of(1050.0) // 약 1km
     }
 
@@ -80,6 +82,9 @@ class CaseLostDetectTest {
         assertThat(useCase.shouldAlert(null, location(0.0, 0.0), stillDisconnected = true)).isFalse()
     }
 
-    private fun location(lat: Double, lng: Double, ts: Long = 0L): LastLocation =
-        LastLocation(lat, lng, ts)
+    private fun location(
+        lat: Double,
+        lng: Double,
+        ts: Long = 0L,
+    ): LastLocation = LastLocation(lat, lng, ts)
 }

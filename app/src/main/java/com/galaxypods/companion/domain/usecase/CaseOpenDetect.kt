@@ -20,49 +20,50 @@ import javax.inject.Singleton
  * - 짧은 시간 내 반복 트리거 방지 ([COOLDOWN_MS])
  */
 @Singleton
-class CaseOpenDetect @Inject constructor() {
+class CaseOpenDetect
+    @Inject
+    constructor() {
+        /** 사용자 설정. 향후 [com.galaxypods.companion.data.preferences.AppPreferences] 위임. */
+        var enabled: Boolean = true
 
-    /** 사용자 설정. 향후 [com.galaxypods.companion.data.preferences.AppPreferences] 위임. */
-    var enabled: Boolean = true
+        private var lastLidOpenCount: Int = -1
+        private var lastTriggerAtMs: Long = 0L
 
-    private var lastLidOpenCount: Int = -1
-    private var lastTriggerAtMs: Long = 0L
+        /**
+         * 광고 한 프레임 처리. 케이스 오픈 시 [onCaseOpened] 호출.
+         *
+         * @param ad 최신 광고
+         * @param nowMs 현재 시각 ms (테스트 주입 가능)
+         * @param onCaseOpened 케이스 오픈 시 호출. 인자는 트리거된 광고.
+         */
+        fun onAdvertisement(
+            ad: AirPodsAdvertisement,
+            nowMs: Long = System.currentTimeMillis(),
+            onCaseOpened: (AirPodsAdvertisement) -> Unit,
+        ) {
+            if (!enabled) {
+                lastLidOpenCount = ad.lidOpenCount
+                return
+            }
 
-    /**
-     * 광고 한 프레임 처리. 케이스 오픈 시 [onCaseOpened] 호출.
-     *
-     * @param ad 최신 광고
-     * @param nowMs 현재 시각 ms (테스트 주입 가능)
-     * @param onCaseOpened 케이스 오픈 시 호출. 인자는 트리거된 광고.
-     */
-    fun onAdvertisement(
-        ad: AirPodsAdvertisement,
-        nowMs: Long = System.currentTimeMillis(),
-        onCaseOpened: (AirPodsAdvertisement) -> Unit,
-    ) {
-        if (!enabled) {
+            val previous = lastLidOpenCount
             lastLidOpenCount = ad.lidOpenCount
-            return
+
+            if (previous < 0) return // 첫 광고
+            if (ad.lidOpenCount <= previous) return // 동일 또는 감소
+
+            if (nowMs - lastTriggerAtMs < COOLDOWN_MS) return
+
+            lastTriggerAtMs = nowMs
+            onCaseOpened(ad)
         }
 
-        val previous = lastLidOpenCount
-        lastLidOpenCount = ad.lidOpenCount
+        fun reset() {
+            lastLidOpenCount = -1
+            lastTriggerAtMs = 0L
+        }
 
-        if (previous < 0) return // 첫 광고
-        if (ad.lidOpenCount <= previous) return // 동일 또는 감소
-
-        if (nowMs - lastTriggerAtMs < COOLDOWN_MS) return
-
-        lastTriggerAtMs = nowMs
-        onCaseOpened(ad)
+        companion object {
+            const val COOLDOWN_MS: Long = 2_000L
+        }
     }
-
-    fun reset() {
-        lastLidOpenCount = -1
-        lastTriggerAtMs = 0L
-    }
-
-    companion object {
-        const val COOLDOWN_MS: Long = 2_000L
-    }
-}

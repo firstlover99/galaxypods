@@ -22,7 +22,6 @@ import androidx.core.graphics.drawable.IconCompat
  * ```
  */
 object BatteryIcon {
-
     private const val ICON_SIZE_PX = 256
     private const val TEXT_RATIO = 0.7f
     private const val DASH_RATIO = 0.5f
@@ -37,22 +36,24 @@ object BatteryIcon {
         return IconCompat.createWithBitmap(bitmap)
     }
 
-    internal fun formatPercent(percent: Int): String = when {
-        percent < 0 -> "—"
-        percent > 100 -> "100"
-        else -> percent.toString()
-    }
+    internal fun formatPercent(percent: Int): String =
+        when {
+            percent < 0 -> "—"
+            percent > 100 -> "100"
+            else -> percent.toString()
+        }
 
     private fun renderText(text: String): Bitmap {
         val bitmap = Bitmap.createBitmap(ICON_SIZE_PX, ICON_SIZE_PX, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
 
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.WHITE
-            isFakeBoldText = true
-            typeface = Typeface.DEFAULT_BOLD
-            textAlign = Paint.Align.CENTER
-        }
+        val paint =
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.WHITE
+                isFakeBoldText = true
+                typeface = Typeface.DEFAULT_BOLD
+                textAlign = Paint.Align.CENTER
+            }
 
         val ratio = if (text.length <= 2) TEXT_RATIO else DASH_RATIO
         paint.textSize = ICON_SIZE_PX * ratio

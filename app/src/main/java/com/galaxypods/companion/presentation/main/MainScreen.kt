@@ -56,18 +56,17 @@ private enum class Route { HOME, SETTINGS, LOCATION, ABOUT }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(
-    viewModel: MainViewModel = hiltViewModel(),
-) {
+fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
     var route by remember { mutableStateOf(Route.HOME) }
 
     when (route) {
-        Route.HOME -> HomeContent(
-            viewModel = viewModel,
-            onSettings = { route = Route.SETTINGS },
-            onLocation = { route = Route.LOCATION },
-            onAbout = { route = Route.ABOUT },
-        )
+        Route.HOME ->
+            HomeContent(
+                viewModel = viewModel,
+                onSettings = { route = Route.SETTINGS },
+                onLocation = { route = Route.LOCATION },
+                onAbout = { route = Route.ABOUT },
+            )
         Route.SETTINGS -> SettingsScreen(onBack = { route = Route.HOME })
         Route.LOCATION -> LastLocationScreen(onBack = { route = Route.HOME })
         Route.ABOUT -> AboutScreen(onBack = { route = Route.HOME })
@@ -103,18 +102,20 @@ private fun HomeContent(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -150,10 +151,11 @@ private fun HomeContent(
 private fun ConnectionHeader(state: MainUiState) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
-            modifier = Modifier
-                .size(96.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+            modifier =
+                Modifier
+                    .size(96.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -216,15 +218,17 @@ private fun BatteryCard(
 ) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
         shape = RoundedCornerShape(20.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
@@ -239,12 +243,13 @@ private fun BatteryCard(
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                text = when {
-                    charging -> "🔌 충전 중"
-                    inEar -> "👂 착용"
-                    percent == null -> ""
-                    else -> "🔋"
-                },
+                text =
+                    when {
+                        charging -> "🔌 충전 중"
+                        inEar -> "👂 착용"
+                        percent == null -> ""
+                        else -> "🔋"
+                    },
                 style = MaterialTheme.typography.bodySmall,
             )
         }
@@ -259,15 +264,17 @@ private fun ToggleRow(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
         shape = RoundedCornerShape(16.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -282,19 +289,24 @@ private fun ToggleRow(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ActionRow(title: String, onClick: () -> Unit) {
+private fun ActionRow(
+    title: String,
+    onClick: () -> Unit,
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
         shape = RoundedCornerShape(16.dp),
         onClick = onClick,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 18.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -311,15 +323,17 @@ private fun ActionRow(title: String, onClick: () -> Unit) {
 private fun TipCard(tip: Tip) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+            ),
         shape = RoundedCornerShape(16.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
@@ -339,9 +353,10 @@ private fun TipCard(tip: Tip) {
 @Composable
 private fun DisclaimerSection() {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 24.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 24.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
@@ -357,21 +372,22 @@ private fun DisclaimerSection() {
     }
 }
 
-private fun formatPercent(percent: Int?): String =
-    percent?.takeIf { it >= 0 }?.let { "$it%" } ?: "—"
+private fun formatPercent(percent: Int?): String = percent?.takeIf { it >= 0 }?.let { "$it%" } ?: "—"
 
 @Composable
-private fun PodsRepository.ConnectionStatus.toUserFacing(): String = when (this) {
-    PodsRepository.ConnectionStatus.SEARCHING -> "● 검색 중"
-    PodsRepository.ConnectionStatus.CONNECTED -> "● 연결됨"
-    PodsRepository.ConnectionStatus.DISCONNECTED -> "○ 끊김"
-    PodsRepository.ConnectionStatus.BLUETOOTH_OFF -> "△ Bluetooth 꺼짐"
-    PodsRepository.ConnectionStatus.PERMISSION_DENIED -> "△ 권한 필요"
-}
+private fun PodsRepository.ConnectionStatus.toUserFacing(): String =
+    when (this) {
+        PodsRepository.ConnectionStatus.SEARCHING -> "● 검색 중"
+        PodsRepository.ConnectionStatus.CONNECTED -> "● 연결됨"
+        PodsRepository.ConnectionStatus.DISCONNECTED -> "○ 끊김"
+        PodsRepository.ConnectionStatus.BLUETOOTH_OFF -> "△ Bluetooth 꺼짐"
+        PodsRepository.ConnectionStatus.PERMISSION_DENIED -> "△ 권한 필요"
+    }
 
 @Composable
-private fun PodsRepository.ConnectionStatus.toColor(): Color = when (this) {
-    PodsRepository.ConnectionStatus.CONNECTED -> Color(0xFF2E7D32)
-    PodsRepository.ConnectionStatus.SEARCHING -> MaterialTheme.colorScheme.primary
-    else -> MaterialTheme.colorScheme.onSurfaceVariant
-}
+private fun PodsRepository.ConnectionStatus.toColor(): Color =
+    when (this) {
+        PodsRepository.ConnectionStatus.CONNECTED -> Color(0xFF2E7D32)
+        PodsRepository.ConnectionStatus.SEARCHING -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }

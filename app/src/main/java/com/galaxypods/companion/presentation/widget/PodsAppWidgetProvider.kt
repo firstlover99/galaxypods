@@ -31,7 +31,6 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class PodsAppWidgetProvider : AppWidgetProvider() {
-
     @Inject lateinit var preferences: AppPreferences
 
     override fun onUpdate(
@@ -54,7 +53,10 @@ class PodsAppWidgetProvider : AppWidgetProvider() {
          * 외부(FGS / Updater)에서 강제 갱신할 때 호출.
          * suspend가 아니므로 호출 측이 미리 snapshot을 준비.
          */
-        fun pushUpdate(context: Context, snapshot: WidgetSnapshot?) {
+        fun pushUpdate(
+            context: Context,
+            snapshot: WidgetSnapshot?,
+        ) {
             val manager = AppWidgetManager.getInstance(context)
             val component = ComponentName(context, PodsAppWidgetProvider::class.java)
             val ids = manager.getAppWidgetIds(component)
@@ -78,19 +80,19 @@ class PodsAppWidgetProvider : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_case_value, formatPercent(snapshot?.caseBatteryPercent))
 
             // 위젯 클릭 → MainActivity 열기
-            val openApp = PendingIntent.getActivity(
-                context,
-                REQUEST_OPEN_APP,
-                Intent(context, MainActivity::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-            )
+            val openApp =
+                PendingIntent.getActivity(
+                    context,
+                    REQUEST_OPEN_APP,
+                    Intent(context, MainActivity::class.java),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
             views.setOnClickPendingIntent(R.id.widget_root, openApp)
 
             return views
         }
 
-        private fun formatPercent(percent: Int?): String =
-            percent?.takeIf { it >= 0 }?.let { "$it%" } ?: "—"
+        private fun formatPercent(percent: Int?): String = percent?.takeIf { it >= 0 }?.let { "$it%" } ?: "—"
 
         private const val REQUEST_OPEN_APP: Int = 300
     }

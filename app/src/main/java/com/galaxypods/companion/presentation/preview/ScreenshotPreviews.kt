@@ -112,9 +112,10 @@ private fun PreviewTipCard() {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                ),
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    ),
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
@@ -149,19 +150,21 @@ private fun FakeMainScreen(
     charging: Boolean,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Box(
-            modifier = Modifier
-                .size(96.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+            modifier =
+                Modifier
+                    .size(96.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -188,7 +191,12 @@ private fun FakeMainScreen(
 }
 
 @Composable
-private fun FakeBatteryCard(modifier: Modifier, label: String, percent: Int, charging: Boolean) {
+private fun FakeBatteryCard(
+    modifier: Modifier,
+    label: String,
+    percent: Int,
+    charging: Boolean,
+) {
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
@@ -211,7 +219,10 @@ private fun FakeBatteryCard(modifier: Modifier, label: String, percent: Int, cha
 }
 
 @Composable
-private fun FakeToggleCard(title: String, checked: Boolean) {
+private fun FakeToggleCard(
+    title: String,
+    checked: Boolean,
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),

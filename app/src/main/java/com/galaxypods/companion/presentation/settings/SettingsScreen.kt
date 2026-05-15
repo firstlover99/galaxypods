@@ -57,18 +57,20 @@ fun SettingsScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             SectionTitle("귀감지 자동 정지")
@@ -142,11 +144,12 @@ fun SettingsScreen(
                 SectionTitle("Samsung 절전")
                 SettingCard {
                     Text(
-                        text = if (state.ignoringBatteryOptimizations) {
-                            "✓ 배터리 최적화 예외에 등록되어 있습니다."
-                        } else {
-                            "⚠️ 배터리 최적화 예외에 등록되지 않았습니다. 백그라운드 동작이 끊길 수 있어요."
-                        },
+                        text =
+                            if (state.ignoringBatteryOptimizations) {
+                                "✓ 배터리 최적화 예외에 등록되어 있습니다."
+                            } else {
+                                "⚠️ 배터리 최적화 예외에 등록되지 않았습니다. 백그라운드 동작이 끊길 수 있어요."
+                            },
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -191,9 +194,10 @@ private fun SettingCard(content: @Composable () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             content()
@@ -227,10 +231,11 @@ private fun ModeRadio(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .selectable(selected = selected, onClick = onClick)
-            .padding(vertical = 6.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .selectable(selected = selected, onClick = onClick)
+                .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButton(selected = selected, onClick = null)

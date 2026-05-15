@@ -28,56 +28,59 @@ import javax.inject.Singleton
  * - 어댑터 OFF / 권한 거부는 별도 상태
  */
 @Singleton
-class PodsRepositoryImpl @Inject constructor(
-    private val scanner: BleScanner,
-    private val parser: AppleContinuityParser,
-) : PodsRepository {
+class PodsRepositoryImpl
+    @Inject
+    constructor(
+        private val scanner: BleScanner,
+        private val parser: AppleContinuityParser,
+    ) : PodsRepository {
+        private val _advertisement = MutableStateFlow<AirPodsAdvertisement?>(null)
+        override val advertisement: StateFlow<AirPodsAdvertisement?> = _advertisement.asStateFlow()
 
-    private val _advertisement = MutableStateFlow<AirPodsAdvertisement?>(null)
-    override val advertisement: StateFlow<AirPodsAdvertisement?> = _advertisement.asStateFlow()
+        private val _status = MutableStateFlow(PodsRepository.ConnectionStatus.DISCONNECTED)
+        override val connectionStatus: StateFlow<PodsRepository.ConnectionStatus> = _status.asStateFlow()
 
-    private val _status = MutableStateFlow(PodsRepository.ConnectionStatus.DISCONNECTED)
-    override val connectionStatus: StateFlow<PodsRepository.ConnectionStatus> = _status.asStateFlow()
+        private var scanning: Boolean = false
 
-    private var scanning: Boolean = false
-
-    override fun startScanning() {
-        if (scanning) return
-        if (!scanner.isReady) {
-            _status.value = PodsRepository.ConnectionStatus.BLUETOOTH_OFF
-            return
+        override fun startScanning() {
+            if (scanning) return
+            if (!scanner.isReady) {
+                _status.value = PodsRepository.ConnectionStatus.BLUETOOTH_OFF
+                return
+            }
+            _status.value = PodsRepository.ConnectionStatus.SEARCHING
+            val started = scanner.startActiveScan(::handleResult)
+            if (!started) {
+                _status.value = PodsRepository.ConnectionStatus.PERMISSION_DENIED
+                return
+            }
+            scanning = true
         }
-        _status.value = PodsRepository.ConnectionStatus.SEARCHING
-        val started = scanner.startActiveScan(::handleResult)
-        if (!started) {
-            _status.value = PodsRepository.ConnectionStatus.PERMISSION_DENIED
-            return
+
+        override fun stopScanning() {
+            if (!scanning) return
+            scanner.stopScan()
+            scanning = false
         }
-        scanning = true
+
+        private fun handleResult(result: ScanResult) {
+            val data =
+                result.scanRecord
+                    ?.getManufacturerSpecificData(ParserConfig.APPLE_MANUFACTURER_ID)
+                    ?: return
+
+            val parsed =
+                parser.parse(
+                    data = data,
+                    rssi = result.rssi,
+                    timestamp = System.currentTimeMillis(),
+                ) ?: return
+
+            _advertisement.value = parsed
+            _status.value = PodsRepository.ConnectionStatus.CONNECTED
+        }
+
+        companion object {
+            const val DISCONNECT_TIMEOUT_MS: Long = 30_000L
+        }
     }
-
-    override fun stopScanning() {
-        if (!scanning) return
-        scanner.stopScan()
-        scanning = false
-    }
-
-    private fun handleResult(result: ScanResult) {
-        val data = result.scanRecord
-            ?.getManufacturerSpecificData(ParserConfig.APPLE_MANUFACTURER_ID)
-            ?: return
-
-        val parsed = parser.parse(
-            data = data,
-            rssi = result.rssi,
-            timestamp = System.currentTimeMillis(),
-        ) ?: return
-
-        _advertisement.value = parsed
-        _status.value = PodsRepository.ConnectionStatus.CONNECTED
-    }
-
-    companion object {
-        const val DISCONNECT_TIMEOUT_MS: Long = 30_000L
-    }
-}

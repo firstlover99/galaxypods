@@ -24,18 +24,20 @@ import javax.inject.Inject
  * "기록 없음" 표시.
  */
 @HiltViewModel
-class LastLocationViewModel @Inject constructor(
-    private val preferences: AppPreferences,
-) : ViewModel() {
+class LastLocationViewModel
+    @Inject
+    constructor(
+        private val preferences: AppPreferences,
+    ) : ViewModel() {
+        val lastLocation: StateFlow<LastLocation?> =
+            preferences.lastLocation
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.Eagerly,
+                    initialValue = null,
+                )
 
-    val lastLocation: StateFlow<LastLocation?> = preferences.lastLocation
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = null,
-        )
-
-    fun clear() {
-        viewModelScope.launch { preferences.clearLastLocation() }
+        fun clear() {
+            viewModelScope.launch { preferences.clearLastLocation() }
+        }
     }
-}

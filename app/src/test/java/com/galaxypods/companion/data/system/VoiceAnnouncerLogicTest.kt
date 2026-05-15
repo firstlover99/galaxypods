@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test
  * 본 테스트는 케이스 오픈 / 임계값 도달 분기가 정확한지 확인한다.
  */
 class VoiceAnnouncerLogicTest {
-
     /**
      * VoiceAnnouncer는 Context를 요구하므로 본 테스트에선 메시지 결정 로직만
      * 별도 함수로 추출해 검증하는 패턴이 이상적. 본 골격에선 동작 시나리오를
@@ -34,8 +33,9 @@ class VoiceAnnouncerLogicTest {
         val threshold = 20
         val previous = ad(left = 30, right = 50)
         val current = ad(left = 15, right = 50)
-        val leftCrossed = current.leftBatteryPercent in 0..threshold &&
-            previous.leftBatteryPercent > threshold
+        val leftCrossed =
+            current.leftBatteryPercent in 0..threshold &&
+                previous.leftBatteryPercent > threshold
         assertThat(leftCrossed).isTrue()
     }
 
@@ -45,8 +45,9 @@ class VoiceAnnouncerLogicTest {
         val threshold = 20
         val previous = ad(left = 10, right = 50)
         val current = ad(left = 8, right = 50)
-        val leftCrossed = current.leftBatteryPercent in 0..threshold &&
-            previous.leftBatteryPercent > threshold
+        val leftCrossed =
+            current.leftBatteryPercent in 0..threshold &&
+                previous.leftBatteryPercent > threshold
         assertThat(leftCrossed).isFalse()
     }
 
@@ -55,16 +56,17 @@ class VoiceAnnouncerLogicTest {
         right: Int = 100,
         case: Int = 100,
         lidOpenCount: Int = 0,
-    ): AirPodsAdvertisement = AirPodsAdvertisement(
-        model = AirPodsModel.AIRPODS_PRO_2_USBC,
-        leftBatteryPercent = left,
-        rightBatteryPercent = right,
-        caseBatteryPercent = case,
-        leftInEar = false,
-        rightInEar = false,
-        leftCharging = false,
-        rightCharging = false,
-        caseCharging = false,
-        lidOpenCount = lidOpenCount,
-    )
+    ): AirPodsAdvertisement =
+        AirPodsAdvertisement(
+            model = AirPodsModel.AIRPODS_PRO_2_USBC,
+            leftBatteryPercent = left,
+            rightBatteryPercent = right,
+            caseBatteryPercent = case,
+            leftInEar = false,
+            rightInEar = false,
+            leftCharging = false,
+            rightCharging = false,
+            caseCharging = false,
+            lidOpenCount = lidOpenCount,
+        )
 }

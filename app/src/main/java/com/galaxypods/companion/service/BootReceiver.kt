@@ -18,11 +18,14 @@ import androidx.core.content.ContextCompat
  * 본 리시버는 권한 사전 검사 후 FGS를 시작하고, 실패 시 silent 폴백.
  */
 class BootReceiver : BroadcastReceiver() {
-
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
-            Intent.ACTION_MY_PACKAGE_REPLACED -> tryStartService(context)
+            Intent.ACTION_MY_PACKAGE_REPLACED,
+            -> tryStartService(context)
             else -> Unit
         }
     }
@@ -37,11 +40,12 @@ class BootReceiver : BroadcastReceiver() {
      * 권한 부족 시 silent return (사용자가 앱 첫 실행 시 권한 허용 후 자동 동작).
      */
     private fun hasRequiredPermissions(context: Context): Boolean {
-        val needed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            android.Manifest.permission.BLUETOOTH_SCAN
-        } else {
-            android.Manifest.permission.BLUETOOTH_ADMIN
-        }
+        val needed =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                android.Manifest.permission.BLUETOOTH_SCAN
+            } else {
+                android.Manifest.permission.BLUETOOTH_ADMIN
+            }
         return ContextCompat.checkSelfPermission(context, needed) ==
             android.content.pm.PackageManager.PERMISSION_GRANTED
     }

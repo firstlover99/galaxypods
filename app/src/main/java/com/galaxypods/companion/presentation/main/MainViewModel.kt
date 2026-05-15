@@ -30,52 +30,62 @@ import javax.inject.Inject
  * Phase 4에서 `AppPreferences`로 토글 상태가 영속화되면 본 ViewModel은 그쪽으로 위임.
  */
 @HiltViewModel
-class MainViewModel @Inject constructor(
-    @ApplicationContext private val appContext: Context,
-    private val repository: PodsRepository,
-    private val autoPlayPause: AutoPlayPause,
-    private val voiceAnnouncer: VoiceAnnouncer,
-) : ViewModel() {
+class MainViewModel
+    @Inject
+    constructor(
+        @ApplicationContext private val appContext: Context,
+        private val repository: PodsRepository,
+        private val autoPlayPause: AutoPlayPause,
+        private val voiceAnnouncer: VoiceAnnouncer,
+    ) : ViewModel() {
+        private val _autoPauseEnabled = MutableStateFlow(autoPlayPause.enabled)
+        private val _voiceAnnouncerEnabled = MutableStateFlow(voiceAnnouncer.enabled)
 
-    private val _autoPauseEnabled = MutableStateFlow(autoPlayPause.enabled)
-    private val _voiceAnnouncerEnabled = MutableStateFlow(voiceAnnouncer.enabled)
+        val uiState: StateFlow<MainUiState> = combineState()
 
-    val uiState: StateFlow<MainUiState> = combineState()
+        init {
+            // 토글 변화 → UseCase에 즉시 반영
+            _autoPauseEnabled
+                .onEach {
+                    autoPlayPause.enabled = it
+                    if (!it) autoPlayPause.reset()
+                }
+                .launchIn(viewModelScope)
 
-    init {
-        // 토글 변화 → UseCase에 즉시 반영
-        _autoPauseEnabled
-            .onEach { autoPlayPause.enabled = it; if (!it) autoPlayPause.reset() }
-            .launchIn(viewModelScope)
-
-        _voiceAnnouncerEnabled
-            .onEach { voiceAnnouncer.enabled = it }
-            .launchIn(viewModelScope)
-    }
-
-    fun startService() = PodsForegroundService.start(appContext)
-    fun stopService() = PodsForegroundService.stop(appContext)
-
-    fun setAutoPause(enabled: Boolean) { _autoPauseEnabled.value = enabled }
-    fun setVoiceAnnouncer(enabled: Boolean) { _voiceAnnouncerEnabled.value = enabled }
-
-    private fun combineState(): StateFlow<MainUiState> {
-        val backing = MutableStateFlow(MainUiState())
-        combine(
-            repository.advertisement,
-            repository.connectionStatus,
-            _autoPauseEnabled,
-            _voiceAnnouncerEnabled,
-        ) { ad, status, autoPause, voice ->
-            MainUiState(
-                status = status,
-                advertisement = ad,
-                autoPauseEnabled = autoPause,
-                voiceAnnouncerEnabled = voice,
-            )
+            _voiceAnnouncerEnabled
+                .onEach { voiceAnnouncer.enabled = it }
+                .launchIn(viewModelScope)
         }
-            .onEach { backing.value = it }
-            .launchIn(viewModelScope)
-        return backing.asStateFlow()
+
+        fun startService() = PodsForegroundService.start(appContext)
+
+        fun stopService() = PodsForegroundService.stop(appContext)
+
+        fun setAutoPause(enabled: Boolean) {
+            _autoPauseEnabled.value = enabled
+        }
+
+        fun setVoiceAnnouncer(enabled: Boolean) {
+            _voiceAnnouncerEnabled.value = enabled
+        }
+
+        private fun combineState(): StateFlow<MainUiState> {
+            val backing = MutableStateFlow(MainUiState())
+            combine(
+                repository.advertisement,
+                repository.connectionStatus,
+                _autoPauseEnabled,
+                _voiceAnnouncerEnabled,
+            ) { ad, status, autoPause, voice ->
+                MainUiState(
+                    status = status,
+                    advertisement = ad,
+                    autoPauseEnabled = autoPause,
+                    voiceAnnouncerEnabled = voice,
+                )
+            }
+                .onEach { backing.value = it }
+                .launchIn(viewModelScope)
+            return backing.asStateFlow()
+        }
     }
-}

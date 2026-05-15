@@ -18,11 +18,9 @@ enum class OnboardingStep {
     DONE,
     ;
 
-    fun next(): OnboardingStep =
-        entries.getOrNull(ordinal + 1) ?: DONE
+    fun next(): OnboardingStep = entries.getOrNull(ordinal + 1) ?: DONE
 
-    fun previous(): OnboardingStep =
-        entries.getOrNull((ordinal - 1).coerceAtLeast(0)) ?: WELCOME
+    fun previous(): OnboardingStep = entries.getOrNull((ordinal - 1).coerceAtLeast(0)) ?: WELCOME
 }
 
 /** 온보딩 화면 UI 상태. */

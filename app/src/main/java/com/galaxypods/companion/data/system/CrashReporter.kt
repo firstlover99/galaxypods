@@ -20,35 +20,39 @@ import javax.inject.Singleton
  * 골격 단계에서는 logcat 출력만.
  */
 @Singleton
-class CrashReporter @Inject constructor() {
+class CrashReporter
+    @Inject
+    constructor() {
+        private var enabled: Boolean = false
 
-    private var enabled: Boolean = false
+        /** 사용자 옵트인/아웃 반영. SDK 활성화 후엔 FirebaseCrashlytics 인스턴스 호출. */
+        fun setEnabled(enabled: Boolean) {
+            this.enabled = enabled
+            Log.i(TAG, "Crashlytics collection ${if (enabled) "ENABLED" else "DISABLED"}")
+            // TODO: Firebase 연결 후
+            // FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(enabled)
+        }
 
-    /** 사용자 옵트인/아웃 반영. SDK 활성화 후엔 FirebaseCrashlytics 인스턴스 호출. */
-    fun setEnabled(enabled: Boolean) {
-        this.enabled = enabled
-        Log.i(TAG, "Crashlytics collection ${if (enabled) "ENABLED" else "DISABLED"}")
-        // TODO: Firebase 연결 후
-        // FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(enabled)
+        /** 비치명적 예외 보고. 옵트아웃 시 무동작. */
+        fun recordException(
+            throwable: Throwable,
+            attributes: Map<String, String> = emptyMap(),
+        ) {
+            if (!enabled) return
+            Log.w(TAG, "[Crashlytics] ${throwable.javaClass.simpleName}: ${throwable.message}")
+            attributes.forEach { (k, v) -> Log.w(TAG, "  $k=$v") }
+            // TODO:
+            // val fc = FirebaseCrashlytics.getInstance()
+            // attributes.forEach { (k, v) -> fc.setCustomKey(k, v) }
+            // fc.recordException(throwable)
+        }
+
+        /** 사용자 식별자 설정 금지 — PII 수집 정책 위반 ([CLAUDE.md] 원칙 11). */
+        @Deprecated("PII 수집 금지. 사용자 식별자 설정하지 말 것.", level = DeprecationLevel.ERROR)
+        @Suppress("UnusedParameter", "unused")
+        fun setUserId(userId: String): Unit = error("PII 수집 금지")
+
+        private companion object {
+            const val TAG: String = "GalaxyPods/Crash"
+        }
     }
-
-    /** 비치명적 예외 보고. 옵트아웃 시 무동작. */
-    fun recordException(throwable: Throwable, attributes: Map<String, String> = emptyMap()) {
-        if (!enabled) return
-        Log.w(TAG, "[Crashlytics] ${throwable.javaClass.simpleName}: ${throwable.message}")
-        attributes.forEach { (k, v) -> Log.w(TAG, "  $k=$v") }
-        // TODO:
-        // val fc = FirebaseCrashlytics.getInstance()
-        // attributes.forEach { (k, v) -> fc.setCustomKey(k, v) }
-        // fc.recordException(throwable)
-    }
-
-    /** 사용자 식별자 설정 금지 — PII 수집 정책 위반 ([CLAUDE.md] 원칙 11). */
-    @Deprecated("PII 수집 금지. 사용자 식별자 설정하지 말 것.", level = DeprecationLevel.ERROR)
-    @Suppress("UnusedParameter", "unused")
-    fun setUserId(userId: String): Unit = error("PII 수집 금지")
-
-    private companion object {
-        const val TAG: String = "GalaxyPods/Crash"
-    }
-}

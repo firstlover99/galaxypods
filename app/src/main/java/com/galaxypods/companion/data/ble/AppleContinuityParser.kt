@@ -100,7 +100,10 @@ class AppleContinuityParser(
         )
     }
 
-    private fun readDeviceType(data: ByteArray, start: Int): Int {
+    private fun readDeviceType(
+        data: ByteArray,
+        start: Int,
+    ): Int {
         val high = data[start + config.deviceTypeOffset].toInt() and 0xFF
         val low = data[start + config.deviceTypeOffset + 1].toInt() and 0xFF
         return (high shl 8) or low
@@ -111,11 +114,12 @@ class AppleContinuityParser(
      * 0xF는 "정보 없음" → BATTERY_UNKNOWN(-1).
      * 그 외 0~10은 그대로 *10 → 0~100. (광고는 10% 단위 정보만 제공)
      */
-    private fun nibbleToPercent(nibble: Int): Int = when {
-        nibble == ParserConfig.BATTERY_NIBBLE_UNKNOWN -> AirPodsAdvertisement.BATTERY_UNKNOWN
-        nibble in 0..10 -> nibble * PERCENT_PER_STEP
-        else -> AirPodsAdvertisement.BATTERY_UNKNOWN
-    }
+    private fun nibbleToPercent(nibble: Int): Int =
+        when {
+            nibble == ParserConfig.BATTERY_NIBBLE_UNKNOWN -> AirPodsAdvertisement.BATTERY_UNKNOWN
+            nibble in 0..10 -> nibble * PERCENT_PER_STEP
+            else -> AirPodsAdvertisement.BATTERY_UNKNOWN
+        }
 
     companion object {
         private const val PERCENT_PER_STEP: Int = 10

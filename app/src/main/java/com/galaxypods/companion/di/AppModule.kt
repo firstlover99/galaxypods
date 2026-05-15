@@ -26,7 +26,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-
     @Provides
     @Singleton
     fun provideParserConfig(): ParserConfig = ParserConfig.DEFAULT
@@ -43,7 +42,6 @@ object AppModule {
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-
     @Binds
     @Singleton
     abstract fun bindPodsRepository(impl: PodsRepositoryImpl): PodsRepository

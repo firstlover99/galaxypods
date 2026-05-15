@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.StateFlow
  * VoiceAnnouncer가 모두 본 인터페이스를 통해 상태를 읽는다.
  */
 interface PodsRepository {
-
     /** 현재 가장 최신 광고. 광고 미수신 시 null. */
     val advertisement: StateFlow<AirPodsAdvertisement?>
 

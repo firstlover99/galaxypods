@@ -8,7 +8,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
 class BatteryIconTest {
-
     @Test
     @DisplayName("0~100 정상 범위는 그대로 문자열")
     fun normalRange() {
@@ -40,7 +39,10 @@ class BatteryIconTest {
         "100, 100",
     )
     @DisplayName("자릿수별 정확 포맷팅")
-    fun digitVariants(input: Int, expected: String) {
+    fun digitVariants(
+        input: Int,
+        expected: String,
+    ) {
         assertThat(BatteryIcon.formatPercent(input)).isEqualTo(expected)
     }
 }

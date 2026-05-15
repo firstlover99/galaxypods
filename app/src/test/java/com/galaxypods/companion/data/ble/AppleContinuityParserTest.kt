@@ -17,19 +17,19 @@ import org.junit.jupiter.params.provider.MethodSource
 // 2. 실측 dump — app/src/test/resources/ble_dumps/{model}.hex 파일이 모두 파싱되는지 검증
 //    (모델별 기대값은 dump가 추가될 때 함께 등록).
 class AppleContinuityParserTest {
-
-    private val parser = AppleContinuityParser(
-        config = ParserConfig.DEFAULT,
-        modelTable = { deviceType ->
-            // 테스트용 룩업. 실제 매핑과 분리해 파서 단독 검증.
-            when (deviceType) {
-                0x2024 -> AirPodsModel.AIRPODS_PRO_2_USBC
-                0x2014 -> AirPodsModel.AIRPODS_PRO_2_LIGHTNING
-                0x200E -> AirPodsModel.AIRPODS_PRO_1
-                else -> AirPodsModel.UNKNOWN
-            }
-        },
-    )
+    private val parser =
+        AppleContinuityParser(
+            config = ParserConfig.DEFAULT,
+            modelTable = { deviceType ->
+                // 테스트용 룩업. 실제 매핑과 분리해 파서 단독 검증.
+                when (deviceType) {
+                    0x2024 -> AirPodsModel.AIRPODS_PRO_2_USBC
+                    0x2014 -> AirPodsModel.AIRPODS_PRO_2_LIGHTNING
+                    0x200E -> AirPodsModel.AIRPODS_PRO_1
+                    else -> AirPodsModel.UNKNOWN
+                }
+            },
+        )
 
     // ============================================================
     // 합성 페이로드 빌더
@@ -38,13 +38,14 @@ class AppleContinuityParserTest {
     /**
      * Continuity 페이로드 (Type 0x07 + Length 0x19 + 25바이트) 합성.
      * 필드별로 명시 지정 가능.
+     * 기본값. left=100%(0x0A), right=90%(0x09), case=50%(0x05).
      */
     @Suppress("LongParameterList")
     private fun buildPayload(
         deviceType: Int = 0x2024,
-        leftBatteryNibble: Int = 0x0A, // 100%
-        rightBatteryNibble: Int = 0x09, // 90%
-        caseBatteryNibble: Int = 0x05, // 50%
+        leftBatteryNibble: Int = 0x0A,
+        rightBatteryNibble: Int = 0x09,
+        caseBatteryNibble: Int = 0x05,
         leftInEar: Boolean = false,
         rightInEar: Boolean = false,
         leftCharging: Boolean = false,
@@ -68,8 +69,11 @@ class AppleContinuityParserTest {
         payload[valueStart + 3] = inEarByte.toByte()
 
         // battery 1 (right high nibble + left low nibble)
-        payload[valueStart + 5] = (((rightBatteryNibble and 0x0F) shl 4) or
-            (leftBatteryNibble and 0x0F)).toByte()
+        payload[valueStart + 5] =
+            (
+                ((rightBatteryNibble and 0x0F) shl 4) or
+                    (leftBatteryNibble and 0x0F)
+            ).toByte()
 
         // battery 2 (case in low nibble)
         payload[valueStart + 6] = (caseBatteryNibble and 0x0F).toByte()
@@ -111,16 +115,17 @@ class AppleContinuityParserTest {
     @Test
     @DisplayName("기본 합성 페이로드 — 모델/배터리/플래그 정확 파싱")
     fun parse_defaultSynthetic_parsesAllFields() {
-        val payload = buildPayload(
-            deviceType = 0x2024,
-            leftBatteryNibble = 0x0A,
-            rightBatteryNibble = 0x09,
-            caseBatteryNibble = 0x05,
-            leftInEar = true,
-            rightInEar = false,
-            caseCharging = true,
-            lidOpenCount = 7,
-        )
+        val payload =
+            buildPayload(
+                deviceType = 0x2024,
+                leftBatteryNibble = 0x0A,
+                rightBatteryNibble = 0x09,
+                caseBatteryNibble = 0x05,
+                leftInEar = true,
+                rightInEar = false,
+                caseCharging = true,
+                lidOpenCount = 7,
+            )
 
         val ad = parser.parse(payload, rssi = -50, timestamp = 1000L)
 
@@ -143,11 +148,12 @@ class AppleContinuityParserTest {
     @Test
     @DisplayName("배터리 nibble 0xF는 BATTERY_UNKNOWN으로 변환")
     fun parse_unknownBatteryNibble_returnsUnknown() {
-        val payload = buildPayload(
-            leftBatteryNibble = 0x0F,
-            rightBatteryNibble = 0x0F,
-            caseBatteryNibble = 0x0F,
-        )
+        val payload =
+            buildPayload(
+                leftBatteryNibble = 0x0F,
+                rightBatteryNibble = 0x0F,
+                caseBatteryNibble = 0x0F,
+            )
 
         val ad = parser.parse(payload)!!
 
@@ -167,10 +173,11 @@ class AppleContinuityParserTest {
     @Test
     @DisplayName("AirPodsModelTable 통합 — Beats 모델도 식별됨")
     fun parse_withRealModelTable_identifiesBeats() {
-        val realParser = AppleContinuityParser(
-            config = ParserConfig.DEFAULT,
-            modelTable = AirPodsModelTable::identify,
-        )
+        val realParser =
+            AppleContinuityParser(
+                config = ParserConfig.DEFAULT,
+                modelTable = AirPodsModelTable::identify,
+            )
         // Powerbeats Pro = 0x200B
         val payload = buildPayload(deviceType = 0x200B)
         val ad = realParser.parse(payload)!!
@@ -181,10 +188,11 @@ class AppleContinuityParserTest {
     @Test
     @DisplayName("AirPodsModelTable 통합 — AirPods Pro 2 USB-C 식별")
     fun parse_withRealModelTable_identifiesAirPodsPro2Usbc() {
-        val realParser = AppleContinuityParser(
-            config = ParserConfig.DEFAULT,
-            modelTable = AirPodsModelTable::identify,
-        )
+        val realParser =
+            AppleContinuityParser(
+                config = ParserConfig.DEFAULT,
+                modelTable = AirPodsModelTable::identify,
+            )
         val payload = buildPayload(deviceType = 0x2024)
         val ad = realParser.parse(payload)!!
         assertThat(ad.model).isEqualTo(AirPodsModel.AIRPODS_PRO_2_USBC)
@@ -210,11 +218,12 @@ class AppleContinuityParserTest {
         rightCharging: Boolean,
         caseCharging: Boolean,
     ) {
-        val payload = buildPayload(
-            leftCharging = leftCharging,
-            rightCharging = rightCharging,
-            caseCharging = caseCharging,
-        )
+        val payload =
+            buildPayload(
+                leftCharging = leftCharging,
+                rightCharging = rightCharging,
+                caseCharging = caseCharging,
+            )
 
         val ad = parser.parse(payload)!!
 
@@ -240,12 +249,13 @@ class AppleContinuityParserTest {
     companion object {
         @JvmStatic
         @Suppress("unused")
-        fun chargingFlagCases(): List<Array<Boolean>> = listOf(
-            arrayOf(false, false, false),
-            arrayOf(true, false, false),
-            arrayOf(false, true, false),
-            arrayOf(false, false, true),
-            arrayOf(true, true, true),
-        )
+        fun chargingFlagCases(): List<Array<Boolean>> =
+            listOf(
+                arrayOf(false, false, false),
+                arrayOf(true, false, false),
+                arrayOf(false, true, false),
+                arrayOf(false, false, true),
+                arrayOf(true, true, true),
+            )
     }
 }

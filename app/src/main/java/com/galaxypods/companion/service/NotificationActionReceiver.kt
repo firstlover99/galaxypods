@@ -28,10 +28,12 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class NotificationActionReceiver : BroadcastReceiver() {
-
     @Inject lateinit var mediaController: MediaController
 
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         when (intent.action) {
             ACTION_PLAY_PAUSE -> mediaController.playPause()
             ACTION_NEXT -> mediaController.next()
@@ -48,11 +50,15 @@ class NotificationActionReceiver : BroadcastReceiver() {
         const val ACTION_VOICE_ASSIST = "com.galaxypods.companion.ACTION_VOICE_ASSIST"
 
         /** 알림 액션 버튼에 부착할 PendingIntent를 생성. */
-        fun pendingIntent(context: Context, action: String): PendingIntent {
-            val intent = Intent(context, NotificationActionReceiver::class.java).apply {
-                this.action = action
-                setPackage(context.packageName)
-            }
+        fun pendingIntent(
+            context: Context,
+            action: String,
+        ): PendingIntent {
+            val intent =
+                Intent(context, NotificationActionReceiver::class.java).apply {
+                    this.action = action
+                    setPackage(context.packageName)
+                }
             return PendingIntent.getBroadcast(
                 context,
                 action.hashCode(),
@@ -62,13 +68,17 @@ class NotificationActionReceiver : BroadcastReceiver() {
         }
 
         /** 본 리시버를 동적 등록. FGS onCreate에서 호출, onDestroy에서 해제. */
-        fun register(context: Context, receiver: NotificationActionReceiver) {
-            val filter = IntentFilter().apply {
-                addAction(ACTION_PLAY_PAUSE)
-                addAction(ACTION_NEXT)
-                addAction(ACTION_PREVIOUS)
-                addAction(ACTION_VOICE_ASSIST)
-            }
+        fun register(
+            context: Context,
+            receiver: NotificationActionReceiver,
+        ) {
+            val filter =
+                IntentFilter().apply {
+                    addAction(ACTION_PLAY_PAUSE)
+                    addAction(ACTION_NEXT)
+                    addAction(ACTION_PREVIOUS)
+                    addAction(ACTION_VOICE_ASSIST)
+                }
             ContextCompat.registerReceiver(
                 context,
                 receiver,
