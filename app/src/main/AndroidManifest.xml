@@ -16,9 +16,6 @@
         android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
         android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
-        android:maxSdkVersion="30"
-        tools:node="merge" />
 
     <!-- ============================================================ -->
     <!-- 포그라운드 서비스 (connectedDevice 타입 — Android 14+ 의무) -->
@@ -38,6 +35,7 @@
 
     <!-- ============================================================ -->
     <!-- 위치 (마지막 위치 기록 — BLE 끊김 시 1회만 fetch, 백그라운드 X) -->
+    <!-- Android 11 이하에서는 BLE 스캔에도 사용되며, 12+에서는 마지막 위치 기능 한정 -->
     <!-- ============================================================ -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

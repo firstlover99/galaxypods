@@ -10,14 +10,12 @@ import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
-/**
- * `AppleContinuityParser` 검증.
- *
- * 두 종류 테스트로 구성.
- * 1. **합성 케이스** — 비트 오프셋 로직 자체의 정확성 검증. 필드별 단일 변경.
- * 2. **실측 dump** — `app/src/test/resources/ble_dumps/*.hex` 파일이 모두 파싱되는지 검증
- *    (모델별 기대값은 dump가 추가될 때 함께 등록).
- */
+// AppleContinuityParser 검증.
+//
+// 두 종류 테스트로 구성.
+// 1. 합성 케이스 — 비트 오프셋 로직 자체의 정확성 검증. 필드별 단일 변경.
+// 2. 실측 dump — app/src/test/resources/ble_dumps/{model}.hex 파일이 모두 파싱되는지 검증
+//    (모델별 기대값은 dump가 추가될 때 함께 등록).
 class AppleContinuityParserTest {
 
     private val parser = AppleContinuityParser(
