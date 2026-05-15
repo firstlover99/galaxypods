@@ -31,8 +31,8 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -145,7 +145,7 @@ private fun MapCard(location: LastLocation) {
                 ),
         ) {
             Marker(
-                state = MarkerState(position = target),
+                state = rememberMarkerState(position = target),
                 title = "마지막 위치",
             )
         }
