@@ -15,6 +15,7 @@ import com.galaxypods.companion.R
 import com.galaxypods.companion.data.location.LastLocationStore
 import com.galaxypods.companion.data.preferences.AppPreferences
 import com.galaxypods.companion.data.system.MediaController
+import com.galaxypods.companion.data.system.ScreenOnReceiver
 import com.galaxypods.companion.data.system.VoiceAnnouncer
 import com.galaxypods.companion.domain.model.AirPodsAdvertisement
 import com.galaxypods.companion.domain.model.LastLocation
@@ -76,6 +77,7 @@ class PodsForegroundService : Service() {
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + supervisor)
 
     private var notificationActionReceiver: NotificationActionReceiver? = null
+    private var screenOnReceiver: ScreenOnReceiver? = null
     private var previous: AirPodsAdvertisement? = null
     private var lastConnectionStatus: PodsRepository.ConnectionStatus? = null
     private var pendingLostCheck: kotlinx.coroutines.Job? = null
@@ -90,6 +92,14 @@ class PodsForegroundService : Service() {
         notificationActionReceiver =
             NotificationActionReceiver().also {
                 NotificationActionReceiver.register(this, it)
+            }
+        // 화면 ON 시 스캐너 재시작 (One UI 절전 회복 안전망 — XDA/OpenPods 패턴).
+        screenOnReceiver =
+            ScreenOnReceiver(onScreenOn = {
+                android.util.Log.i(TAG, "SCREEN_ON → repository.startScanning() idempotent")
+                runCatching { repository.startScanning() }
+            }).also {
+                ScreenOnReceiver.register(this, it)
             }
         voiceAnnouncer.initialize()
         observeRepository()
@@ -119,6 +129,8 @@ class PodsForegroundService : Service() {
         repository.stopScanning()
         notificationActionReceiver?.let { runCatching { unregisterReceiver(it) } }
         notificationActionReceiver = null
+        screenOnReceiver?.let { ScreenOnReceiver.unregister(this, it) }
+        screenOnReceiver = null
         voiceAnnouncer.shutdown()
         supervisor.cancel()
         super.onDestroy()
