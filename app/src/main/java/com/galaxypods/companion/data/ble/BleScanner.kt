@@ -12,6 +12,7 @@ import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -56,8 +57,16 @@ class BleScanner
          */
         @SuppressLint("MissingPermission")
         fun startActiveScan(onResult: (ScanResult) -> Unit): Boolean {
-            if (!isReady) return false
-            val scanner = adapter?.bluetoothLeScanner ?: return false
+            Log.i(TAG, "startActiveScan called. ready=$isReady, adapter=${adapter != null}, permission=${hasScanPermission()}")
+            if (!isReady) {
+                Log.w(TAG, "Not ready — bluetooth off or permission denied")
+                return false
+            }
+            val scanner = adapter?.bluetoothLeScanner
+            if (scanner == null) {
+                Log.w(TAG, "bluetoothLeScanner is null")
+                return false
+            }
 
             // 이미 스캔 중이면 중지 후 재시작
             stopScan()
@@ -68,16 +77,23 @@ class BleScanner
                         callbackType: Int,
                         result: ScanResult,
                     ) {
+                        Log.d(TAG, "onScanResult: addr=${result.device?.address} rssi=${result.rssi}")
                         onResult(result)
                     }
 
                     override fun onBatchScanResults(results: MutableList<ScanResult>) {
+                        Log.d(TAG, "onBatchScanResults: ${results.size} items")
                         results.forEach(onResult)
+                    }
+
+                    override fun onScanFailed(errorCode: Int) {
+                        Log.e(TAG, "onScanFailed errorCode=$errorCode")
                     }
                 }
             activeCallback = callback
 
             scanner.startScan(buildFilters(), buildSettings(), callback)
+            Log.i(TAG, "startScan invoked")
             return true
         }
 
@@ -94,36 +110,35 @@ class BleScanner
         }
 
         /**
-         * Continuity Proximity Pairing TLV 헤더 사전 필터.
+         * Apple manufacturer ID(0x004C) 광고만 시스템 레벨에서 통과.
          *
-         * manufacturerData 첫 두 바이트가 [0x07, 0x19] (Type=0x07, Length=25)인 광고만
-         * 통과. iPhone/Apple Watch는 다른 Type을 사용하므로 자동 거부.
+         * **변경 (2026-05-18).** Type/Length 마스크 제거 — 일부 펌웨어/모델은 다른 길이의
+         * 광고를 송출. 우리 파서가 코드 레벨에서 Type 0x07 검증하므로 안전.
+         * 콜백 부하는 약간 증가하나 iPhone/Watch 광고는 빠르게 거부됨.
          */
         private fun buildFilters(): List<ScanFilter> {
-            val data =
-                byteArrayOf(
-                    ParserConfig.TYPE_PROXIMITY_PAIRING.toByte(),
-                    ParserConfig.LENGTH_PROXIMITY_PAIRING.toByte(),
-                )
-            val mask = byteArrayOf(0xFF.toByte(), 0xFF.toByte())
             val filter =
                 ScanFilter.Builder()
-                    .setManufacturerData(ParserConfig.APPLE_MANUFACTURER_ID, data, mask)
+                    .setManufacturerData(ParserConfig.APPLE_MANUFACTURER_ID, byteArrayOf(), byteArrayOf())
                     .build()
             return listOf(filter)
         }
 
-        /** 활성 스캔 설정. 배터리 영향 줄이려 LOW_LATENCY 대신 BALANCED. */
+        /** 활성 스캔 설정. 디버그 단계는 LOW_LATENCY로 빠른 캡처. */
         private fun buildSettings(): ScanSettings {
             val builder =
                 ScanSettings.Builder()
-                    .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
+                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                     .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 builder.setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
                 builder.setNumOfMatches(ScanSettings.MATCH_NUM_FEW_ADVERTISEMENT)
             }
             return builder.build()
+        }
+
+        private companion object {
+            const val TAG = "GalaxyPods/BLE"
         }
 
         private fun hasScanPermission(): Boolean {

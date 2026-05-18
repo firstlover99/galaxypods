@@ -2,6 +2,7 @@
 package com.galaxypods.companion.data
 
 import android.bluetooth.le.ScanResult
+import android.util.Log
 import com.galaxypods.companion.data.ble.AppleContinuityParser
 import com.galaxypods.companion.data.ble.BleScanner
 import com.galaxypods.companion.data.ble.ParserConfig
@@ -43,18 +44,22 @@ class PodsRepositoryImpl
         private var scanning: Boolean = false
 
         override fun startScanning() {
+            Log.i(TAG, "startScanning called. alreadyScanning=$scanning, scannerReady=${scanner.isReady}")
             if (scanning) return
             if (!scanner.isReady) {
+                Log.w(TAG, "Scanner not ready → BLUETOOTH_OFF")
                 _status.value = PodsRepository.ConnectionStatus.BLUETOOTH_OFF
                 return
             }
             _status.value = PodsRepository.ConnectionStatus.SEARCHING
             val started = scanner.startActiveScan(::handleResult)
             if (!started) {
+                Log.w(TAG, "startActiveScan returned false → PERMISSION_DENIED")
                 _status.value = PodsRepository.ConnectionStatus.PERMISSION_DENIED
                 return
             }
             scanning = true
+            Log.i(TAG, "Scanning started successfully")
         }
 
         override fun stopScanning() {
@@ -64,23 +69,41 @@ class PodsRepositoryImpl
         }
 
         private fun handleResult(result: ScanResult) {
-            val data =
-                result.scanRecord
-                    ?.getManufacturerSpecificData(ParserConfig.APPLE_MANUFACTURER_ID)
-                    ?: return
+            val data = result.scanRecord?.getManufacturerSpecificData(ParserConfig.APPLE_MANUFACTURER_ID)
+            if (data == null) {
+                Log.v(TAG, "no Apple manufacturer data, skip")
+                return
+            }
+            val hex = data.joinToString("") { "%02X".format(it) }
+            Log.d(TAG, "Apple advertisement received (${data.size} bytes): $hex")
 
             val parsed =
                 parser.parse(
                     data = data,
                     rssi = result.rssi,
                     timestamp = System.currentTimeMillis(),
-                ) ?: return
+                )
+            if (parsed == null) {
+                Log.v(TAG, "Parser returned null (not Proximity Pairing or too short)")
+                return
+            }
 
-            _advertisement.value = parsed
-            _status.value = PodsRepository.ConnectionStatus.CONNECTED
+            Log.i(TAG, "Parsed: ${parsed.model.displayName} L=${parsed.leftBatteryPercent}% R=${parsed.rightBatteryPercent}% case=${parsed.caseBatteryPercent}%")
+
+            // model UNKNOWN = Type 0x10 (Nearby Info) fallback → 배터리/모델 정보 없음.
+            // 진짜 CONNECTED는 Type 0x07 (Proximity Pairing) 받았을 때만.
+            // Type 0x10만 받으면 advertisement는 갱신하지 않음 (배터리 카드 비어있게 유지).
+            if (parsed.model != com.galaxypods.companion.domain.model.AirPodsModel.UNKNOWN) {
+                _advertisement.value = parsed
+                _status.value = PodsRepository.ConnectionStatus.CONNECTED
+            } else {
+                // Type 0x10 fallback: 광고는 받지만 정보 없음 → 화면에 표시 X
+                // (사용자가 "연결됨" 표시로 오해하는 것 방지)
+            }
         }
 
         companion object {
             const val DISCONNECT_TIMEOUT_MS: Long = 30_000L
+            private const val TAG = "GalaxyPods/Repo"
         }
     }

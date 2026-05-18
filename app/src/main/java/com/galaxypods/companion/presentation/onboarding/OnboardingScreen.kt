@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -49,6 +50,7 @@ fun OnboardingScreen(
         modifier =
             Modifier
                 .fillMaxSize()
+                .safeDrawingPadding() // 시스템 바(상/하)·디스플레이 컷아웃 회피
                 .padding(24.dp),
     ) {
         StepProgress(step = state.step)

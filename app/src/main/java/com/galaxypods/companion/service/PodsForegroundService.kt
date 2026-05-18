@@ -84,6 +84,7 @@ class PodsForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
+        android.util.Log.i(TAG, "FGS.onCreate START")
         super.onCreate()
         startInForeground(initialNotification())
         notificationActionReceiver =
@@ -92,6 +93,7 @@ class PodsForegroundService : Service() {
             }
         voiceAnnouncer.initialize()
         observeRepository()
+        android.util.Log.i(TAG, "FGS.onCreate END")
     }
 
     override fun onStartCommand(
@@ -99,12 +101,16 @@ class PodsForegroundService : Service() {
         flags: Int,
         startId: Int,
     ): Int {
+        android.util.Log.i(TAG, "onStartCommand action=${intent?.action}")
         when (intent?.action) {
             ACTION_STOP -> {
                 stopSelf()
                 return START_NOT_STICKY
             }
-            else -> repository.startScanning()
+            else -> {
+                android.util.Log.i(TAG, "Triggering repository.startScanning()")
+                repository.startScanning()
+            }
         }
         return START_STICKY
     }
@@ -309,6 +315,7 @@ class PodsForegroundService : Service() {
     }
 
     companion object {
+        private const val TAG = "GalaxyPods/FGS"
         const val NOTIFICATION_ID: Int = 1001
         const val REQUEST_STOP: Int = 100
         const val ACTION_STOP: String = "com.galaxypods.companion.FGS_STOP"

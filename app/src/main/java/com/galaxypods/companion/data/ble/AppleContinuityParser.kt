@@ -38,12 +38,56 @@ class AppleContinuityParser(
         rssi: Int = 0,
         timestamp: Long = 0L,
     ): AirPodsAdvertisement? {
-        val payloadStart = findProximityPairingPayload(data) ?: return null
-        val end = payloadStart + config.expectedLength
-        if (end > data.size) return null
+        // Type 0x07 (Proximity Pairing) — 배터리/모델/in-ear 모두
+        val payloadStart = findProximityPairingPayload(data)
+        if (payloadStart != null) {
+            val end = payloadStart + config.expectedLength
+            if (end <= data.size) {
+                return parseProximityPairing(data, payloadStart, rssi, timestamp)
+            }
+        }
 
-        return parseProximityPairing(data, payloadStart, rssi, timestamp)
+        // Type 0x10 (Nearby Info) fallback — 페어링 active 상태에서 받는 광고
+        // 배터리/모델 정보 없음. 단순 "Apple 기기 근처에 있음"만 표시.
+        if (hasNearbyInfo(data)) {
+            return nearbyInfoFallback(rssi, timestamp)
+        }
+
+        return null
     }
+
+    /** Type 0x10 (Nearby Info) TLV가 포함되어 있는지. */
+    private fun hasNearbyInfo(data: ByteArray): Boolean {
+        var offset = 0
+        while (offset + 1 < data.size) {
+            val type = data[offset].toInt() and 0xFF
+            val length = data[offset + 1].toInt() and 0xFF
+            if (type == TYPE_NEARBY_INFO) return true
+            offset += 2 + length
+        }
+        return false
+    }
+
+    /**
+     * Nearby Info 광고는 배터리/모델 정보를 포함하지 않음.
+     * "Apple 기기 발견" 수준의 placeholder 표현. 사용자는 케이스 뚜껑 열기 또는
+     * 페어링 모드 진입을 통해 Type 0x07를 받아야 배터리 표시.
+     */
+    private fun nearbyInfoFallback(rssi: Int, timestamp: Long): AirPodsAdvertisement =
+        AirPodsAdvertisement(
+            model = AirPodsModel.UNKNOWN,
+            leftBatteryPercent = AirPodsAdvertisement.BATTERY_UNKNOWN,
+            rightBatteryPercent = AirPodsAdvertisement.BATTERY_UNKNOWN,
+            caseBatteryPercent = AirPodsAdvertisement.BATTERY_UNKNOWN,
+            leftInEar = false,
+            rightInEar = false,
+            leftCharging = false,
+            rightCharging = false,
+            caseCharging = false,
+            lidOpenCount = 0,
+            rssi = rssi,
+            timestamp = timestamp,
+        )
 
     /**
      * TLV를 순회해 Type=0x07 (Proximity Pairing) 페이로드의 시작 인덱스를 찾는다.
@@ -123,5 +167,8 @@ class AppleContinuityParser(
 
     companion object {
         private const val PERCENT_PER_STEP: Int = 10
+
+        /** Continuity Nearby Info TLV. 페어링 active 상태에서 송출되며 배터리 정보 없음. */
+        private const val TYPE_NEARBY_INFO: Int = 0x10
     }
 }

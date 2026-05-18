@@ -57,13 +57,11 @@
         android:name=".GalaxyPodsApp"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.GalaxyPods"
-        tools:targetApi="34">
+        android:theme="@style/Theme.GalaxyPods">
 
         <!-- Google Maps API 키 — local.properties에서 주입 (gradle.kts manifestPlaceholders) -->
         <meta-data

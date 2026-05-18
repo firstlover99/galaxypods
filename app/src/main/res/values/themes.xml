@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- GalaxyPods 기본 테마 — Compose Material 3 기반, 동적 색상은 Compose 측에서 분기 -->
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.GalaxyPods" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor" tools:targetApi="l">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
-    </style>
+<!-- GalaxyPods 기본 테마 — Compose Activity 호환을 위해 DeviceDefault 기반 단순 테마 사용 -->
+<!-- Compose Material3가 모든 시각적 처리. base theme은 단말 OEM 기본을 따라 호환성 최대화. -->
+<resources>
+    <style name="Theme.GalaxyPods" parent="@android:style/Theme.DeviceDefault.Light.NoActionBar" />
 </resources>

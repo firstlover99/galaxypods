@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -83,6 +84,12 @@ private fun HomeContent(
 ) {
     val state by viewModel.uiState.collectAsState()
     val tip = remember { TipProvider().tipOfTheDay() }
+
+    // 메인 화면 진입 시 FGS 자동 시작 (한 번만, 권한 있을 때)
+    // BLE 스캔이 즉시 시작되어 AirPods 광고 수신 → 배터리 표시
+    LaunchedEffect(Unit) {
+        viewModel.startService()
+    }
 
     Scaffold(
         topBar = {
@@ -149,6 +156,21 @@ private fun HomeContent(
 
 @Composable
 private fun ConnectionHeader(state: MainUiState) {
+    val ad = state.advertisement
+    val isUnknown = ad != null && ad.model == com.galaxypods.companion.domain.model.AirPodsModel.UNKNOWN
+    val displayName =
+        when {
+            ad == null -> "이어폰을 찾는 중"
+            isUnknown -> "Apple 기기 감지됨"
+            else -> ad.model.displayName
+        }
+    val avatarText =
+        when {
+            ad == null -> "—"
+            isUnknown -> "🎧"
+            else -> ad.model.displayName.firstOrNull()?.toString() ?: "—"
+        }
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier =
@@ -159,14 +181,14 @@ private fun ConnectionHeader(state: MainUiState) {
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = state.advertisement?.model?.displayName?.firstOrNull()?.toString() ?: "—",
+                text = avatarText,
                 fontSize = 36.sp,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
         }
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = state.advertisement?.model?.displayName ?: "이어폰을 찾는 중",
+            text = displayName,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
         )
@@ -175,6 +197,14 @@ private fun ConnectionHeader(state: MainUiState) {
             style = MaterialTheme.typography.bodyMedium,
             color = state.status.toColor(),
         )
+        if (isUnknown) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "배터리 확인. 케이스 뚜껑 열기 → 3초 안에 갱신",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

@@ -5,19 +5,27 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import android.util.Log
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
 class GalaxyPodsApp : Application() {
     override fun onCreate() {
+        Log.i(TAG, "Application.onCreate START")
         super.onCreate()
-        createNotificationChannels()
+        runCatching { createNotificationChannels() }
+            .onFailure { Log.e(TAG, "createNotificationChannels failed", it) }
+        Log.i(TAG, "Application.onCreate END")
     }
 
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 
-        val nm = getSystemService(NotificationManager::class.java)
+        val nm =
+            getSystemService(NotificationManager::class.java) ?: run {
+                Log.w(TAG, "NotificationManager is null — skipping channel creation")
+                return
+            }
 
         val fgsChannel =
             NotificationChannel(
@@ -48,5 +56,6 @@ class GalaxyPodsApp : Application() {
     companion object {
         const val CHANNEL_FGS = "fgs_pods_connection"
         const val CHANNEL_CASE_OPEN = "case_open_alert"
+        private const val TAG = "GalaxyPods/App"
     }
 }

@@ -2,8 +2,10 @@
 package com.galaxypods.companion.presentation
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -44,17 +46,26 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.i(TAG, "MainActivity.onCreate START")
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        setContent {
-            GalaxyPodsTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
-                ) {
-                    AppContent()
+        runCatching {
+            setContent {
+                GalaxyPodsTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background,
+                    ) {
+                        AppContent()
+                    }
                 }
             }
-        }
+        }.onFailure { Log.e(TAG, "setContent failed", it) }
+        Log.i(TAG, "MainActivity.onCreate END")
+    }
+
+    private companion object {
+        const val TAG = "GalaxyPods/MainAct"
     }
 }
 

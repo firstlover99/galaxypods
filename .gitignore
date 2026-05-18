@@ -46,3 +46,6 @@ Desktop.ini
 
 # Detekt / ktlint
 .detekt-baseline.xml
+
+# 로컬 진단 로그 덤프 (단말 PID/MAC 등 식별 정보 포함, git 커밋 X)
+diagnose/

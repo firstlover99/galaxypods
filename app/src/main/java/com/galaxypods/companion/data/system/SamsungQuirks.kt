@@ -109,28 +109,30 @@ class SamsungQuirks
         }
 
         /** 본 앱이 배터리 최적화 예외 목록에 있는지. */
-        fun isIgnoringBatteryOptimizations(): Boolean {
-            val pm = context.getSystemService(PowerManager::class.java) ?: return false
-            return pm.isIgnoringBatteryOptimizations(context.packageName)
-        }
+        fun isIgnoringBatteryOptimizations(): Boolean =
+            runCatching {
+                val pm = context.getSystemService(PowerManager::class.java) ?: return@runCatching false
+                pm.isIgnoringBatteryOptimizations(context.packageName)
+            }.getOrDefault(false)
 
         /**
          * 본 앱이 SLEEPING 버킷에 진입했는지 자가진단 (검토안 §7.2).
          * RARE 이상이면 Samsung 절전 정책에 의해 백그라운드 동작이 제한될 수 있음.
          */
-        fun sleepStatus(): SleepStatus {
-            // appStandbyBucket은 API 28+ (Android 9+). minSdk 26~27는 UNKNOWN.
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return SleepStatus.UNKNOWN
-            val usm =
-                context.getSystemService(UsageStatsManager::class.java)
-                    ?: return SleepStatus.UNKNOWN
-            val bucket = usm.appStandbyBucket
-            return when {
-                bucket >= UsageStatsManager.STANDBY_BUCKET_RARE -> SleepStatus.SLEEPING
-                bucket >= UsageStatsManager.STANDBY_BUCKET_FREQUENT -> SleepStatus.NORMAL
-                else -> SleepStatus.ACTIVE
-            }
-        }
+        fun sleepStatus(): SleepStatus =
+            runCatching {
+                // appStandbyBucket은 API 28+ (Android 9+). minSdk 26~27는 UNKNOWN.
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return@runCatching SleepStatus.UNKNOWN
+                val usm =
+                    context.getSystemService(UsageStatsManager::class.java)
+                        ?: return@runCatching SleepStatus.UNKNOWN
+                val bucket = usm.appStandbyBucket
+                when {
+                    bucket >= UsageStatsManager.STANDBY_BUCKET_RARE -> SleepStatus.SLEEPING
+                    bucket >= UsageStatsManager.STANDBY_BUCKET_FREQUENT -> SleepStatus.NORMAL
+                    else -> SleepStatus.ACTIVE
+                }
+            }.getOrDefault(SleepStatus.UNKNOWN)
 
         /**
          * `android.os.Build.VERSION.SEM_PLATFORM_INT`를 reflection으로 읽는다.
