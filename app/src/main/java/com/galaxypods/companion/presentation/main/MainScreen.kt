@@ -327,13 +327,18 @@ private fun BatteryRow(
     val right = advertisement?.rightBatteryPercent ?: fallbackSnapshot?.rightBatteryPercent
     val case = advertisement?.caseBatteryPercent ?: fallbackSnapshot?.caseBatteryPercent
 
+    // 마이크 활성 pod 표시 — CAPod isLeftPodPrimary 기반.
+    // 실시간 광고 있을 때만. 양쪽 모두 귀에 있을 때만 유의미 (한쪽 케이스면 다른쪽이 자동 primary).
+    val leftIsMic = advertisement?.let { it.isLeftPodPrimary && it.leftInEar && it.rightInEar } == true
+    val rightIsMic = advertisement?.let { !it.isLeftPodPrimary && it.leftInEar && it.rightInEar } == true
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         BatteryCard(
             modifier = Modifier.weight(1f),
-            label = "왼쪽",
+            label = if (leftIsMic) "왼쪽 🎤" else "왼쪽",
             percent = left,
             charging = advertisement?.leftCharging == true,
             inEar = advertisement?.leftInEar == true,
@@ -341,7 +346,7 @@ private fun BatteryRow(
         )
         BatteryCard(
             modifier = Modifier.weight(1f),
-            label = "오른쪽",
+            label = if (rightIsMic) "오른쪽 🎤" else "오른쪽",
             percent = right,
             charging = advertisement?.rightCharging == true,
             inEar = advertisement?.rightInEar == true,
