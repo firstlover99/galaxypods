@@ -1,4 +1,6 @@
 // GalaxyPods 앱 모듈 빌드 스크립트
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -26,8 +28,18 @@ android {
 
         // Google Maps API 키 — local.properties의 MAPS_API_KEY를 주입.
         // local.properties는 .gitignore 대상. 누락 시 placeholder 키 사용 (지도 표시 X).
+        //
+        // **중요.** local.properties는 gradle property가 아니므로 providers.gradleProperty()로
+        // 안 읽힘. Properties().load()로 직접 로드 필요. (2026-05-18 fix — 이전 빌드는
+        // MISSING_KEY가 manifest에 주입되어 Google Maps Authorization Failure 발생.)
+        val localProps =
+            Properties().apply {
+                val f = rootProject.file("local.properties")
+                if (f.exists()) f.inputStream().use { load(it) }
+            }
         val mapsApiKey =
-            providers.gradleProperty("MAPS_API_KEY").orNull
+            localProps.getProperty("MAPS_API_KEY")
+                ?: providers.gradleProperty("MAPS_API_KEY").orNull
                 ?: System.getenv("MAPS_API_KEY")
                 ?: "MISSING_KEY"
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
