@@ -3,6 +3,7 @@ package com.galaxypods.companion.data.ble
 
 import com.galaxypods.companion.domain.model.AirPodsAdvertisement
 import com.galaxypods.companion.domain.model.AirPodsModel
+import com.galaxypods.companion.domain.model.LidState
 
 /**
  * Apple Continuity 광고에서 AirPods 상태를 파싱한다.
@@ -127,6 +128,12 @@ class AppleContinuityParser(
         val isLeftPrimary = (statusByte and ParserConfig.MASK_STATUS_LEFT_PRIMARY) != 0
         val areValuesFlipped = !isLeftPrimary
         val isThisPodInCase = (statusByte and ParserConfig.MASK_STATUS_THIS_POD_IN_CASE) != 0
+        val isOnePodInCase = (statusByte and ParserConfig.MASK_STATUS_ONE_POD_IN_CASE) != 0
+        val areBothPodsInCase = (statusByte and ParserConfig.MASK_STATUS_BOTH_PODS_IN_CASE) != 0
+        val hasCaseContext = isThisPodInCase || isOnePodInCase || areBothPodsInCase
+
+        // LidState — CAPod fromRaw 정렬.
+        val lidState = LidState.fromRaw(lidOpenCount, hasCaseContext)
 
         // Pods 배터리 — flip 적용
         val highNibble = (podsBatteryByte shr 4) and 0x0F
@@ -178,6 +185,11 @@ class AppleContinuityParser(
             rightCharging = rightCharging,
             caseCharging = caseCharging,
             lidOpenCount = lidOpenCount,
+            lidState = lidState,
+            isThisPodInCase = isThisPodInCase,
+            isOnePodInCase = isOnePodInCase,
+            areBothPodsInCase = areBothPodsInCase,
+            isLeftPodPrimary = isLeftPrimary,
             rssi = rssi,
             timestamp = timestamp,
         )

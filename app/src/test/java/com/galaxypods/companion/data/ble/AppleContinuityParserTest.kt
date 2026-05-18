@@ -3,6 +3,7 @@ package com.galaxypods.companion.data.ble
 
 import com.galaxypods.companion.domain.model.AirPodsAdvertisement
 import com.galaxypods.companion.domain.model.AirPodsModel
+import com.galaxypods.companion.domain.model.LidState
 import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.DisplayName
@@ -299,6 +300,13 @@ class AppleContinuityParserTest {
         assertThat(ad.leftCharging).isFalse()
         assertThat(ad.rightCharging).isFalse()
         assertThat(ad.caseCharging).isFalse()
+        // status 0x0B — pods 모두 귀에, case 컨텍스트 없음 → NOT_IN_CASE
+        assertThat(ad.lidState).isEqualTo(LidState.NOT_IN_CASE)
+        assertThat(ad.isThisPodInCase).isFalse()
+        assertThat(ad.isOnePodInCase).isFalse()
+        assertThat(ad.areBothPodsInCase).isFalse()
+        // bit 5 = 0 → R primary
+        assertThat(ad.isLeftPodPrimary).isFalse()
     }
 
     @Test
@@ -323,6 +331,13 @@ class AppleContinuityParserTest {
         assertThat(ad.leftCharging).isFalse()
         assertThat(ad.rightCharging).isTrue()
         assertThat(ad.caseCharging).isFalse()
+        // status 0x53. bit 6=1 (this pod in case), bit 4=1 (one pod in case), bit 5=0 (R primary).
+        assertThat(ad.isThisPodInCase).isTrue()
+        assertThat(ad.isOnePodInCase).isTrue()
+        assertThat(ad.areBothPodsInCase).isFalse()
+        assertThat(ad.isLeftPodPrimary).isFalse()
+        // lid byte 0x32 — bit 3 = 0 → OPEN (hasCaseContext = true 이므로).
+        assertThat(ad.lidState).isEqualTo(LidState.OPEN)
     }
 
     @Test

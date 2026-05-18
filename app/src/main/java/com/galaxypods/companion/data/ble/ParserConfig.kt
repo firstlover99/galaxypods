@@ -68,6 +68,12 @@ data class ParserConfig(
         /** Status bit. this broadcasting pod is in the case. */
         const val MASK_STATUS_THIS_POD_IN_CASE: Int = 0x40
 
+        /** Status bit. one pod in case (the other in ear/out). */
+        const val MASK_STATUS_ONE_POD_IN_CASE: Int = 0x10
+
+        /** Status bit. both pods in case. */
+        const val MASK_STATUS_BOTH_PODS_IN_CASE: Int = 0x04
+
         /**
          * In-ear 비트 (status byte). CAPod 조건 매핑.
          * `areValuesFlipped XOR isThisPodInThecase == false` 기준.

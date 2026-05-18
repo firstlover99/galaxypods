@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.galaxypods.companion.R
 import com.galaxypods.companion.domain.model.AirPodsAdvertisement
+import com.galaxypods.companion.domain.model.LidState
 import com.galaxypods.companion.domain.model.WidgetSnapshot
 import com.galaxypods.companion.domain.repository.PodsRepository
 import com.galaxypods.companion.domain.tip.Tip
@@ -271,6 +272,18 @@ private fun ConnectionHeader(state: MainUiState) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        // CAPod 정렬 — 실시간 광고일 때 lid state + pod position 표시
+        if (ad != null && !isUnknown) {
+            val statusBits = ad.toStatusBits()
+            if (statusBits.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = statusBits,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
         // 실시간 광고 없고 마지막 스냅샷만 있을 때 → "X분 전" 표시
         if (ad == null && snapshot != null) {
             Spacer(modifier = Modifier.height(6.dp))
@@ -281,6 +294,25 @@ private fun ConnectionHeader(state: MainUiState) {
             )
         }
     }
+}
+
+/** AirPodsAdvertisement → 사용자 friendly 상태 한 줄 (lid / pod 위치 / 마이크 등). */
+private fun AirPodsAdvertisement.toStatusBits(): String {
+    val parts = mutableListOf<String>()
+    when (lidState) {
+        LidState.OPEN -> parts.add("📦 뚜껑 열림")
+        LidState.CLOSED -> parts.add("📦 뚜껑 닫힘")
+        LidState.NOT_IN_CASE -> { /* 표시 생략 */ }
+        LidState.UNKNOWN -> { /* 표시 생략 */ }
+    }
+    when {
+        areBothPodsInCase -> parts.add("양쪽 케이스 안")
+        isOnePodInCase -> parts.add("한쪽만 케이스")
+        leftInEar && rightInEar -> parts.add("양쪽 착용")
+        leftInEar -> parts.add("왼쪽 착용")
+        rightInEar -> parts.add("오른쪽 착용")
+    }
+    return parts.joinToString("  ·  ")
 }
 
 @Composable

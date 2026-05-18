@@ -10,6 +10,11 @@ package com.galaxypods.companion.domain.model
  *
  * `displayName`은 UI 표시용. `hasAnc`는 §3 기능 분기에 사용.
  * `category`로 AirPods / Beats / 기타 분류.
+ *
+ * **CAPod (d4rken-org/capod) 모델 코드 정렬 — 2026-05-18.**
+ * 기존 테이블의 BeatsSolo3 / BeatsFlex / BeatsStudioBudsPlus / Powerbeats3 키 오류
+ * 수정 + AirPods 1세대, AirPods Max USB-C / Max 2, BeatsX / PowerBeats4 / PowerBeats Pro 2
+ * / Beats Solo Buds 신규 추가.
  */
 enum class AirPodsModel(
     val displayName: String,
@@ -19,6 +24,7 @@ enum class AirPodsModel(
     // ============================================================
     // AirPods 시리즈
     // ============================================================
+    AIRPODS_1("AirPods 1세대", false, Category.AIRPODS),
     AIRPODS_2("AirPods 2세대", false, Category.AIRPODS),
     AIRPODS_3("AirPods 3세대", false, Category.AIRPODS),
     AIRPODS_4("AirPods 4", false, Category.AIRPODS),
@@ -29,15 +35,20 @@ enum class AirPodsModel(
     AIRPODS_PRO_3("AirPods Pro 3세대", true, Category.AIRPODS),
     AIRPODS_MAX_LIGHTNING("AirPods Max", true, Category.AIRPODS),
     AIRPODS_MAX_USBC("AirPods Max (USB-C)", true, Category.AIRPODS),
+    AIRPODS_MAX_2("AirPods Max 2세대", true, Category.AIRPODS),
 
     // ============================================================
     // Beats 시리즈 (Apple 인수, 동일 광고 포맷 사용)
     // ============================================================
+    BEATS_X("BeatsX", false, Category.BEATS),
     POWERBEATS_3("Powerbeats 3", false, Category.BEATS),
+    POWERBEATS_4("Powerbeats 4", false, Category.BEATS),
     POWERBEATS_PRO("Powerbeats Pro", false, Category.BEATS),
+    POWERBEATS_PRO_2("Powerbeats Pro 2", true, Category.BEATS),
     BEATS_SOLO_3("Beats Solo 3", false, Category.BEATS),
     BEATS_SOLO_PRO("Beats Solo Pro", true, Category.BEATS),
     BEATS_SOLO_4("Beats Solo 4", false, Category.BEATS),
+    BEATS_SOLO_BUDS("Beats Solo Buds", false, Category.BEATS),
     BEATS_STUDIO_3("Beats Studio 3", true, Category.BEATS),
     BEATS_STUDIO_PRO("Beats Studio Pro", true, Category.BEATS),
     BEATS_STUDIO_BUDS("Beats Studio Buds", true, Category.BEATS),
