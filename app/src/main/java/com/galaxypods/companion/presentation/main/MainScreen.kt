@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.galaxypods.companion.R
 import com.galaxypods.companion.domain.model.AirPodsAdvertisement
+import com.galaxypods.companion.domain.model.WidgetSnapshot
 import com.galaxypods.companion.domain.repository.PodsRepository
 import com.galaxypods.companion.domain.tip.Tip
 import com.galaxypods.companion.domain.tip.TipProvider
@@ -129,7 +130,10 @@ private fun HomeContent(
             ConnectionHeader(state = state)
             Spacer(modifier = Modifier.height(8.dp))
 
-            BatteryRow(advertisement = state.advertisement)
+            BatteryRow(
+                advertisement = state.advertisement,
+                fallbackSnapshot = state.lastSnapshot,
+            )
 
             ToggleRow(
                 title = "👂 귀감지 자동 정지",
@@ -157,18 +161,23 @@ private fun HomeContent(
 @Composable
 private fun ConnectionHeader(state: MainUiState) {
     val ad = state.advertisement
+    val snapshot = state.lastSnapshot
     val isUnknown = ad != null && ad.model == com.galaxypods.companion.domain.model.AirPodsModel.UNKNOWN
+
+    // 우선순위. 실시간 광고(known) > 실시간 광고(unknown) > DataStore 스냅샷 > 폴백 메시지
     val displayName =
         when {
-            ad == null -> "이어폰을 찾는 중"
-            isUnknown -> "Apple 기기 감지됨"
-            else -> ad.model.displayName
+            ad != null && !isUnknown -> ad.model.displayName
+            ad != null && isUnknown -> "Apple 기기 감지됨"
+            snapshot != null -> snapshot.model.displayName
+            else -> "이어폰을 찾는 중"
         }
     val avatarText =
         when {
-            ad == null -> "—"
-            isUnknown -> "🎧"
-            else -> ad.model.displayName.firstOrNull()?.toString() ?: "—"
+            ad != null && !isUnknown -> ad.model.displayName.firstOrNull()?.toString() ?: "—"
+            ad != null && isUnknown -> "🎧"
+            snapshot != null -> snapshot.model.displayName.firstOrNull()?.toString() ?: "—"
+            else -> "—"
         }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -205,11 +214,30 @@ private fun ConnectionHeader(state: MainUiState) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        // 실시간 광고 없고 마지막 스냅샷만 있을 때 → "X분 전" 표시
+        if (ad == null && snapshot != null) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "마지막 확인. ${formatTimeAgo(snapshot.timestamp)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
 @Composable
-private fun BatteryRow(advertisement: AirPodsAdvertisement?) {
+private fun BatteryRow(
+    advertisement: AirPodsAdvertisement?,
+    fallbackSnapshot: WidgetSnapshot?,
+) {
+    // 실시간 광고가 있으면 그것을 우선, 없으면 마지막 스냅샷을 stale 상태로 표시.
+    // in-ear / charging은 stale일 때 의미 없어 false 고정 (오해 방지).
+    val isStale = advertisement == null && fallbackSnapshot != null
+    val left = advertisement?.leftBatteryPercent ?: fallbackSnapshot?.leftBatteryPercent
+    val right = advertisement?.rightBatteryPercent ?: fallbackSnapshot?.rightBatteryPercent
+    val case = advertisement?.caseBatteryPercent ?: fallbackSnapshot?.caseBatteryPercent
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -217,23 +245,26 @@ private fun BatteryRow(advertisement: AirPodsAdvertisement?) {
         BatteryCard(
             modifier = Modifier.weight(1f),
             label = "왼쪽",
-            percent = advertisement?.leftBatteryPercent,
+            percent = left,
             charging = advertisement?.leftCharging == true,
             inEar = advertisement?.leftInEar == true,
+            stale = isStale,
         )
         BatteryCard(
             modifier = Modifier.weight(1f),
             label = "오른쪽",
-            percent = advertisement?.rightBatteryPercent,
+            percent = right,
             charging = advertisement?.rightCharging == true,
             inEar = advertisement?.rightInEar == true,
+            stale = isStale,
         )
         BatteryCard(
             modifier = Modifier.weight(1f),
             label = "케이스",
-            percent = advertisement?.caseBatteryPercent,
+            percent = case,
             charging = advertisement?.caseCharging == true,
             inEar = false,
+            stale = isStale,
         )
     }
 }
@@ -245,7 +276,15 @@ private fun BatteryCard(
     percent: Int?,
     charging: Boolean,
     inEar: Boolean,
+    stale: Boolean = false,
 ) {
+    // stale = 마지막 스냅샷 폴백. 시각적으로 흐릿하게 + 자물쇠 아이콘으로 구별.
+    val textColor =
+        if (stale) {
+            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        }
     Card(
         modifier = modifier,
         colors =
@@ -271,10 +310,12 @@ private fun BatteryCard(
                 text = formatPercent(percent),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
+                color = textColor,
             )
             Text(
                 text =
                     when {
+                        stale && percent != null -> "🕒 이전 값"
                         charging -> "🔌 충전 중"
                         inEar -> "👂 착용"
                         percent == null -> ""
@@ -403,6 +444,23 @@ private fun DisclaimerSection() {
 }
 
 private fun formatPercent(percent: Int?): String = percent?.takeIf { it >= 0 }?.let { "$it%" } ?: "—"
+
+/** 마지막 스냅샷 timestamp → 한국어 상대시간. PodsLink 패턴. */
+internal fun formatTimeAgo(timestamp: Long): String {
+    val diffMs = System.currentTimeMillis() - timestamp
+    if (diffMs < 0) return "방금 전"
+    val seconds = diffMs / 1000
+    val minutes = seconds / 60
+    val hours = minutes / 60
+    val days = hours / 24
+    return when {
+        seconds < 60 -> "방금 전"
+        minutes < 60 -> "${minutes}분 전"
+        hours < 24 -> "${hours}시간 전"
+        days < 7 -> "${days}일 전"
+        else -> "오래 전"
+    }
+}
 
 @Composable
 private fun PodsRepository.ConnectionStatus.toUserFacing(): String =

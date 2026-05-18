@@ -235,8 +235,10 @@
 - [x] Type 0x10 Nearby Info 거짓 양성 방지
 - [ ] **Type 0x07 (Proximity Pairing) 수신 — 신펌웨어 AirPods Pro에서 0건** ★
   - 두 단말 모두 동일. AirPods Pro 자체가 광고 안 함
+  - 페어링 모드 (흰 버튼 5초) 활성화 후에도 Type 0x07 0건 — 펌웨어 레벨 결정
   - v1.0은 구펌웨어 / AirPods 2/3 / AirPods Max에서만 배터리 표시
   - 신펌웨어 = v2.0+ AAP/L2CAP 필요
+- [x] **Persistent Snapshot 폴백 도입** — 광고 없을 때 마지막 스냅샷 + "X분 전" 표시 (PodsLink 패턴, 결정 52)
 
 ### 출시 전 마지막 점검 (사용자 액션 필요)
 

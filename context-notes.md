@@ -5,6 +5,30 @@
 
 ---
 
+## 2026-05-18 — Persistent Snapshot 폴백 도입 (PodsLink 패턴 차용)
+
+### 결정 52. 마지막 스냅샷을 메인 화면에 폴백 표시
+
+**왜.** 결정 45에서 확인했듯 AirPods Pro 신펌웨어가 Type 0x07을 사실상 송출 안 함 → `advertisement`가 대부분 시간 null. 사용자가 앱을 열 때마다 "이어폰을 찾는 중"만 보면 비루트 한계 안에서도 가능한 UX 정보(직전 케이스 뚜껑 열림 시 받은 배터리 %)를 손해 봄.
+
+**구현**.
+- `MainUiState`에 `lastSnapshot: WidgetSnapshot?` 추가
+- `MainViewModel`에서 `AppPreferences.widgetSnapshot` Flow를 5-인자 vararg combine으로 결합
+- `MainScreen`.
+  - `ConnectionHeader`. 광고 없으면 스냅샷 모델명 사용 + "마지막 확인. X분 전" 라벨
+  - `BatteryRow` / `BatteryCard`. 광고 없으면 스냅샷 배터리 표시 + `stale=true` → 텍스트 알파 0.6 + "🕒 이전 값"
+  - `formatTimeAgo()`. 60초/60분/24시간/7일 단위 한국어 상대시간
+- in-ear / charging은 stale일 때 false 고정 (오해 방지)
+
+**비교 - 경쟁 앱 패턴**.
+- PodsLink. 동일한 방식 (DB에 마지막 스냅샷 저장, 항상 표시)
+- AndroPods. 비슷하지만 "마지막 본 지 N분" 표시 없음
+- 우리 차별점. 명시적 stale 표시 + 타임스탬프 → 사용자가 정보의 freshness를 인지
+
+**불변 보존**. `_advertisement.value` 자체는 여전히 Type 0x07 받았을 때만 갱신. 폴백은 UI 레이어 한정.
+
+---
+
 ## 2026-05-18 — 첫 실기기 검증 (Galaxy S24 Ultra + Note 20 Ultra)
 
 ### 결정 45. 두 단말에서 검증 — 코드는 모두 정상, AirPods Pro 신펌웨어 한계 확인
