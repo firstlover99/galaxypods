@@ -7,39 +7,50 @@ package com.galaxypods.companion.data.ble
  * Apple이 펌웨어 업데이트로 필드 위치를 옮길 경우, 코드 변경 없이 본 데이터 클래스만
  * 교체(추후 Firebase Remote Config로 `parser_config.json` 다운로드)하면 동작 복구 가능.
  *
- * **기준 자료.** PoPETs 2020 (Celosia & Cunche) Fig.15 + LibrePods AAP Definitions.md
- * 그리고 설계안 §4.4 코드. 오프셋은 설계안 기준이며 실측 dump로 재검증 필요.
+ * **레이아웃 (CAPod / furiousMAC continuity 검증).**
+ * ```
+ * [0]   prefix (0x01 표준, 일부 펌웨어 0x07)
+ * [1-2] device model (little-endian)
+ * [3]   status — in-ear, case 위치, primary pod (flip bit)
+ * [4]   pods battery — upper nibble=R, lower nibble=L (flip시 반전)
+ * [5]   charging (upper nibble) + case battery (lower nibble)
+ * [6]   lid open counter
+ * [7]   device color
+ * [8]   suffix (0x00)
+ * [9+]  encrypted IRK (16바이트)
+ * ```
  *
- * **검증.** `app/src/test/resources/ble_dumps/` 골든바이트로 매번 테스트.
+ * **검증.** `app/src/test/resources/ble_dumps/` 골든바이트 + CAPod 실측 테스트 벡터.
  */
 data class ParserConfig(
-    val version: String = "v1.0-design-doc",
+    val version: String = "v1.1-capod-aligned",
     val proximityPairingType: Int = TYPE_PROXIMITY_PAIRING,
     val expectedLength: Int = LENGTH_PROXIMITY_PAIRING,
     /**
      * Device Type 2바이트 시작 오프셋.
      *
-     * Apple Continuity Type 0x07 페이로드 레이아웃.
-     * - payload[0] = prefix (보통 0x07)
-     * - payload[1..2] = Device Type (**little-endian**) ← 본 오프셋
-     *
-     * 따라서 offset=1. 읽기는 LE: payload[offset]=low, payload[offset+1]=high.
-     *
-     * **검증.** 2026-05-18 Galaxy Note 20 USB로 AirPods Pro 2 USB-C 재페어링 시
-     * 캡처한 패킷 `07 19 07 24 20 15 ...`에서 wire 바이트 `24 20`을 LE로
-     * 읽으면 0x2024 = AIRPODS_PRO_2_USBC 룩업 일치.
+     * payload[1..2] = Device Type (**little-endian**) ← 본 오프셋
+     * 읽기는 LE: payload[offset]=low, payload[offset+1]=high.
      */
     val deviceTypeOffset: Int = 1,
-    /** in-ear 비트 플래그가 있는 바이트 오프셋. left=bit3, right=bit1. */
-    val inEarOffset: Int = 3,
-    /** 배터리 1바이트(상위 4비트=right, 하위 4비트=left, 0~15). */
-    val battery1Offset: Int = 5,
-    /** 배터리 2바이트(하위 4비트=case, 상위 4비트=예약/충전). */
-    val battery2Offset: Int = 6,
-    /** 충전 플래그 바이트. bit0=right, bit1=left, bit2=case. */
-    val chargingOffset: Int = 7,
-    /** 케이스 lid open 카운터(0~255). 변화량으로 케이스 오픈 감지. */
-    val lidOpenOffset: Int = 8,
+    /**
+     * Status byte 오프셋.
+     *
+     * - bit 5: primary pod (1=L primary, 0=R primary). R primary이면 battery/charging 반전.
+     * - bit 6: this pod (broadcaster) in case
+     * - bit 4: one pod in case
+     * - bit 2: both pods in case
+     * - bit 3, bit 1: in-ear (조건부 매핑, CAPod DualApplePods 참조)
+     */
+    val statusOffset: Int = 3,
+    /** Pods 배터리 1바이트 (R/L nibble, flip 적용). */
+    val podsBatteryOffset: Int = 4,
+    /** 충전 플래그 (upper nibble) + 케이스 배터리 (lower nibble) 통합 byte. */
+    val chargingCaseBatteryOffset: Int = 5,
+    /** 케이스 lid open 카운터 (변화량으로 케이스 오픈 감지). */
+    val lidOpenOffset: Int = 6,
+    /** Device color byte. */
+    val colorOffset: Int = 7,
 ) {
     companion object {
         /** Apple Inc. — Bluetooth SIG 할당 manufacturer ID. */
@@ -51,25 +62,36 @@ data class ParserConfig(
         /** Type 0x07 페이로드 길이. 0x19 = 25 바이트. */
         const val LENGTH_PROXIMITY_PAIRING: Int = 0x19
 
-        /** in-ear 비트 마스크 (왼쪽). */
-        const val MASK_LEFT_IN_EAR: Int = 0x08
+        /** Status bit. primary pod (1 = left primary, 0 = right primary → flip). */
+        const val MASK_STATUS_LEFT_PRIMARY: Int = 0x20
 
-        /** in-ear 비트 마스크 (오른쪽). */
-        const val MASK_RIGHT_IN_EAR: Int = 0x02
+        /** Status bit. this broadcasting pod is in the case. */
+        const val MASK_STATUS_THIS_POD_IN_CASE: Int = 0x40
 
-        /** 충전 비트 마스크 (오른쪽). */
-        const val MASK_RIGHT_CHARGING: Int = 0x01
+        /**
+         * In-ear 비트 (status byte). CAPod 조건 매핑.
+         * `areValuesFlipped XOR isThisPodInThecase == false` 기준.
+         * - L 정상: bit 1 (0x02)
+         * - R 정상: bit 3 (0x08)
+         * 조건이 true이면 L/R 교환.
+         */
+        const val MASK_IN_EAR_DEFAULT_LEFT: Int = 0x02
+        const val MASK_IN_EAR_DEFAULT_RIGHT: Int = 0x08
 
-        /** 충전 비트 마스크 (왼쪽). */
-        const val MASK_LEFT_CHARGING: Int = 0x02
-
-        /** 충전 비트 마스크 (케이스). */
-        const val MASK_CASE_CHARGING: Int = 0x04
+        /**
+         * 충전 플래그 (chargingCaseBattery byte의 upper nibble 영역).
+         * 정상 (not flipped). L=bit 4 (0x10), R=bit 5 (0x20)
+         * flip시 (R primary). L=bit 5, R=bit 4 (교환)
+         * 케이스 charging은 bit 6 (0x40) — flip 무관.
+         */
+        const val MASK_DEFAULT_LEFT_CHARGING: Int = 0x10
+        const val MASK_DEFAULT_RIGHT_CHARGING: Int = 0x20
+        const val MASK_CASE_CHARGING: Int = 0x40
 
         /** 배터리 4비트 정보 없음 표시값. */
         const val BATTERY_NIBBLE_UNKNOWN: Int = 0x0F
 
-        /** Default 인스턴스. v1.0 기준. */
+        /** Default 인스턴스. v1.1 기준 (CAPod 정렬). */
         val DEFAULT: ParserConfig = ParserConfig()
     }
 }

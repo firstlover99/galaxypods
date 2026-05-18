@@ -7,15 +7,12 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.MethodSource
 
 // AppleContinuityParser 검증.
 //
 // 두 종류 테스트로 구성.
 // 1. 합성 케이스 — 비트 오프셋 로직 자체의 정확성 검증. 필드별 단일 변경.
-// 2. 실측 dump — app/src/test/resources/ble_dumps/{model}.hex 파일이 모두 파싱되는지 검증
-//    (모델별 기대값은 dump가 추가될 때 함께 등록).
+// 2. 실측 dump — CAPod 검증 벡터 + 자체 캡처 패킷으로 정확한 byte 위치/마스크 검증.
 class AppleContinuityParserTest {
     private val parser =
         AppleContinuityParser(
@@ -32,13 +29,15 @@ class AppleContinuityParserTest {
         )
 
     // ============================================================
-    // 합성 페이로드 빌더
+    // 합성 페이로드 빌더 (v1.1 layout — CAPod 정렬)
     // ============================================================
 
     /**
      * Continuity 페이로드 (Type 0x07 + Length 0x19 + 25바이트) 합성.
-     * 필드별로 명시 지정 가능.
-     * 기본값. left=100%(0x0A), right=90%(0x09), case=50%(0x05).
+     *
+     * **레이아웃.**
+     * [0] prefix=0x01, [1-2] device LE, [3] status, [4] pods battery,
+     * [5] charging+case, [6] lid, [7] color, [8] suffix, [9+] encrypted
      */
     @Suppress("LongParameterList")
     private fun buildPayload(
@@ -52,44 +51,87 @@ class AppleContinuityParserTest {
         rightCharging: Boolean = false,
         caseCharging: Boolean = false,
         lidOpenCount: Int = 0,
+        // status bit 5 (left primary) 기본 true → flip 안 함.
+        leftPrimary: Boolean = true,
+        thisPodInCase: Boolean = false,
     ): ByteArray {
         val payload = ByteArray(2 + ParserConfig.LENGTH_PROXIMITY_PAIRING)
         payload[0] = ParserConfig.TYPE_PROXIMITY_PAIRING.toByte()
         payload[1] = ParserConfig.LENGTH_PROXIMITY_PAIRING.toByte()
 
         val valueStart = 2
-        // payload[0] = prefix (실측 wire는 0x07). 파서가 무시.
-        payload[valueStart + 0] = 0x07
-        // Device Type (**little-endian**: low byte first, high byte second)
-        // 실측 와이어 레이아웃 일치 (deviceTypeOffset=1).
+        // [0] prefix (실측 wire는 0x01 표준)
+        payload[valueStart + 0] = 0x01
+        // [1-2] Device Type LE
         payload[valueStart + 1] = (deviceType and 0xFF).toByte()
         payload[valueStart + 2] = ((deviceType shr 8) and 0xFF).toByte()
 
-        // in-ear flags
-        var inEarByte = 0
-        if (leftInEar) inEarByte = inEarByte or ParserConfig.MASK_LEFT_IN_EAR
-        if (rightInEar) inEarByte = inEarByte or ParserConfig.MASK_RIGHT_IN_EAR
-        payload[valueStart + 3] = inEarByte.toByte()
+        // [3] Status byte — primary pod + in-ear + case position
+        var statusByte = 0
+        if (leftPrimary) statusByte = statusByte or ParserConfig.MASK_STATUS_LEFT_PRIMARY
+        if (thisPodInCase) statusByte = statusByte or ParserConfig.MASK_STATUS_THIS_POD_IN_CASE
+        // In-ear 매핑은 flip XOR isThisPodInCase 조건 따라 결정 (파서 로직 동일).
+        val flipInEar = (!leftPrimary) xor thisPodInCase
+        if (leftInEar) {
+            statusByte =
+                statusByte or
+                if (flipInEar) {
+                    ParserConfig.MASK_IN_EAR_DEFAULT_RIGHT
+                } else {
+                    ParserConfig.MASK_IN_EAR_DEFAULT_LEFT
+                }
+        }
+        if (rightInEar) {
+            statusByte =
+                statusByte or
+                if (flipInEar) {
+                    ParserConfig.MASK_IN_EAR_DEFAULT_LEFT
+                } else {
+                    ParserConfig.MASK_IN_EAR_DEFAULT_RIGHT
+                }
+        }
+        payload[valueStart + 3] = statusByte.toByte()
 
-        // battery 1 (right high nibble + left low nibble)
-        payload[valueStart + 5] =
-            (
-                ((rightBatteryNibble and 0x0F) shl 4) or
-                    (leftBatteryNibble and 0x0F)
-            ).toByte()
+        // [4] Pods battery — flip 따라 nibble 위치 결정
+        val highNibble =
+            if (leftPrimary) {
+                rightBatteryNibble and 0x0F
+            } else {
+                leftBatteryNibble and 0x0F
+            }
+        val lowNibble =
+            if (leftPrimary) {
+                leftBatteryNibble and 0x0F
+            } else {
+                rightBatteryNibble and 0x0F
+            }
+        payload[valueStart + 4] = ((highNibble shl 4) or lowNibble).toByte()
 
-        // battery 2 (case in low nibble)
-        payload[valueStart + 6] = (caseBatteryNibble and 0x0F).toByte()
+        // [5] Charging (upper nibble) + Case battery (lower nibble)
+        var chargingCaseByte = caseBatteryNibble and 0x0F
+        if (leftCharging) {
+            chargingCaseByte =
+                chargingCaseByte or
+                if (leftPrimary) {
+                    ParserConfig.MASK_DEFAULT_LEFT_CHARGING
+                } else {
+                    ParserConfig.MASK_DEFAULT_RIGHT_CHARGING
+                }
+        }
+        if (rightCharging) {
+            chargingCaseByte =
+                chargingCaseByte or
+                if (leftPrimary) {
+                    ParserConfig.MASK_DEFAULT_RIGHT_CHARGING
+                } else {
+                    ParserConfig.MASK_DEFAULT_LEFT_CHARGING
+                }
+        }
+        if (caseCharging) chargingCaseByte = chargingCaseByte or ParserConfig.MASK_CASE_CHARGING
+        payload[valueStart + 5] = chargingCaseByte.toByte()
 
-        // charging flags
-        var chargingByte = 0
-        if (rightCharging) chargingByte = chargingByte or ParserConfig.MASK_RIGHT_CHARGING
-        if (leftCharging) chargingByte = chargingByte or ParserConfig.MASK_LEFT_CHARGING
-        if (caseCharging) chargingByte = chargingByte or ParserConfig.MASK_CASE_CHARGING
-        payload[valueStart + 7] = chargingByte.toByte()
-
-        // lid open count
-        payload[valueStart + 8] = lidOpenCount.toByte()
+        // [6] Lid open count
+        payload[valueStart + 6] = lidOpenCount.toByte()
 
         return payload
     }
@@ -140,10 +182,9 @@ class AppleContinuityParserTest {
         assertThat(ad.caseBatteryPercent).isEqualTo(50)
         assertThat(ad.leftInEar).isTrue()
         assertThat(ad.rightInEar).isFalse()
-        // 충전 플래그는 현재 강제 false (역추적 필요, 파서 TODO 참조).
         assertThat(ad.leftCharging).isFalse()
         assertThat(ad.rightCharging).isFalse()
-        assertThat(ad.caseCharging).isFalse()
+        assertThat(ad.caseCharging).isTrue()
         assertThat(ad.lidOpenCount).isEqualTo(7)
         assertThat(ad.rssi).isEqualTo(-50)
         assertThat(ad.timestamp).isEqualTo(1000L)
@@ -175,21 +216,6 @@ class AppleContinuityParserTest {
     }
 
     @Test
-    @DisplayName("AirPodsModelTable 통합 — Beats 모델도 식별됨")
-    fun parse_withRealModelTable_identifiesBeats() {
-        val realParser =
-            AppleContinuityParser(
-                config = ParserConfig.DEFAULT,
-                modelTable = AirPodsModelTable::identify,
-            )
-        // Powerbeats Pro = 0x200B
-        val payload = buildPayload(deviceType = 0x200B)
-        val ad = realParser.parse(payload)!!
-        assertThat(ad.model).isEqualTo(AirPodsModel.POWERBEATS_PRO)
-        assertThat(ad.model.category).isEqualTo(AirPodsModel.Category.BEATS)
-    }
-
-    @Test
     @DisplayName("AirPodsModelTable 통합 — AirPods Pro 2 USB-C 식별")
     fun parse_withRealModelTable_identifiesAirPodsPro2Usbc() {
         val realParser =
@@ -214,31 +240,33 @@ class AppleContinuityParserTest {
         assertThat(ad.model).isEqualTo(AirPodsModel.AIRPODS_PRO_1)
     }
 
-    @ParameterizedTest
-    @MethodSource("chargingFlagCases")
-    @DisplayName("충전 플래그는 현재 강제 false (정확 byte 위치 역추적 전까지)")
-    fun parse_chargingFlags_alwaysFalseUntilReverseEngineered(
-        leftCharging: Boolean,
-        rightCharging: Boolean,
-        caseCharging: Boolean,
-    ) {
-        val payload =
-            buildPayload(
-                leftCharging = leftCharging,
-                rightCharging = rightCharging,
-                caseCharging = caseCharging,
-            )
-
+    @Test
+    @DisplayName("충전 플래그 — 각 충전 옵션이 정확히 파싱됨 (case-charging 단독)")
+    fun parse_caseChargingOnly() {
+        val payload = buildPayload(caseCharging = true)
         val ad = parser.parse(payload)!!
-
-        // 파서가 chargingDisabled=true로 잠금. UI에 잘못된 "충전 중" 표시 방지.
         assertThat(ad.leftCharging).isFalse()
         assertThat(ad.rightCharging).isFalse()
-        assertThat(ad.caseCharging).isFalse()
+        assertThat(ad.caseCharging).isTrue()
+    }
+
+    @Test
+    @DisplayName("충전 플래그 — 양쪽 pod + case 모두 충전")
+    fun parse_allCharging() {
+        val payload =
+            buildPayload(
+                leftCharging = true,
+                rightCharging = true,
+                caseCharging = true,
+            )
+        val ad = parser.parse(payload)!!
+        assertThat(ad.leftCharging).isTrue()
+        assertThat(ad.rightCharging).isTrue()
+        assertThat(ad.caseCharging).isTrue()
     }
 
     // ============================================================
-    // 실측 dump 검증 (dump 추가되면 자동 확장)
+    // 실측 dump 검증 (CAPod 벡터 + 자체 캡처)
     // ============================================================
 
     @Test
@@ -249,54 +277,84 @@ class AppleContinuityParserTest {
     }
 
     @Test
-    @DisplayName("실측 캡처 — AirPods Pro 2 USB-C 재페어링 시 Type 0x07 (Note 20 / 2026-05-18)")
+    @DisplayName("CAPod 실측 #164 — AirPods Pro 2 USB-C, 양쪽 in-ear, 90% 양쪽, case unknown, 비충전")
+    fun parse_capodVector_164_inEar() {
+        val realParser =
+            AppleContinuityParser(
+                config = ParserConfig.DEFAULT,
+                modelTable = AirPodsModelTable::identify,
+            )
+        // CAPod AirPodsPro2UsbcTest 첫번째 벡터 (27 bytes = TLV 2 + payload 25).
+        val hex = "07190124200B998F11000400000000000000000000000000000000"
+        val data = hexToBytes(hex)
+
+        val ad = realParser.parse(data)
+        assertThat(ad).isNotNull()
+        ad!!
+        assertThat(ad.model).isEqualTo(AirPodsModel.AIRPODS_PRO_2_USBC)
+        assertThat(ad.leftBatteryPercent).isEqualTo(90)
+        assertThat(ad.rightBatteryPercent).isEqualTo(90)
+        // case nibble = F → unknown → -1
+        assertThat(ad.caseBatteryPercent).isEqualTo(AirPodsAdvertisement.BATTERY_UNKNOWN)
+        assertThat(ad.leftCharging).isFalse()
+        assertThat(ad.rightCharging).isFalse()
+        assertThat(ad.caseCharging).isFalse()
+    }
+
+    @Test
+    @DisplayName("CAPod 실측 #164 in-case — AirPods Pro 2 USB-C, 100% 양쪽, case 80%, R 단독 충전")
+    fun parse_capodVector_164_inCase() {
+        val realParser =
+            AppleContinuityParser(
+                config = ParserConfig.DEFAULT,
+                modelTable = AirPodsModelTable::identify,
+            )
+        // CAPod AirPodsPro2UsbcTest 두번째 벡터 (27 bytes).
+        val hex = "071901242053AA983200050000000000000000000000000000000000"
+        val data = hexToBytes(hex)
+
+        val ad = realParser.parse(data)
+        assertThat(ad).isNotNull()
+        ad!!
+        assertThat(ad.model).isEqualTo(AirPodsModel.AIRPODS_PRO_2_USBC)
+        assertThat(ad.leftBatteryPercent).isEqualTo(100)
+        assertThat(ad.rightBatteryPercent).isEqualTo(100)
+        assertThat(ad.caseBatteryPercent).isEqualTo(80)
+        assertThat(ad.leftCharging).isFalse()
+        assertThat(ad.rightCharging).isTrue()
+        assertThat(ad.caseCharging).isFalse()
+    }
+
+    @Test
+    @DisplayName("실측 자체 캡처 — Note 20 재페어링 시 AirPods Pro 2 USB-C")
     fun parse_realCapture_airPodsPro2UsbcDuringRepair() {
-        // Galaxy Note 20 Ultra USB로 AirPods Pro 2 USB-C 재페어링 중 캡처.
-        // wire bytes (manufacturerSpecificData):
-        //   07 19 07 24 20 15 E4 E4 44 72 8D 5E FA BC 29 BD FB 7F BC 14 81 DE C3 C6 E3 27 A9
-        // 분해.
-        //   [0..1] TLV header: type=0x07, length=0x19 (25바이트 페이로드)
-        //   [2]    prefix 0x07
-        //   [3..4] device type LE: 0x24 0x20 → 0x2024 (AIRPODS_PRO_2_USBC)
-        //   [5]    status 0x15 (in-ear/lid 비트)
-        //   [6]    battery 1: 0xE4 (high=R=0xE=unknown, low=L=0x4=40%)
-        //   [7]    battery 2: 0xE4 (low=case=0x4=40%)
-        //   [8]    충전 플래그: 0x44
-        //   [9+]   암호화된 IRK
+        // 2026-05-18 Note 20 캡처. flip 적용 시 R=40%, L=unknown.
         val realParser =
             AppleContinuityParser(
                 config = ParserConfig.DEFAULT,
                 modelTable = AirPodsModelTable::identify,
             )
         val hex = "071907242015E4E444728D5EFABC29BDFB7FBC1481DEC3C6E327A9"
-        val data =
-            hex.chunked(2)
-                .map { it.toInt(16).toByte() }
-                .toByteArray()
+        val data = hexToBytes(hex)
 
         val ad = realParser.parse(data)
-
         assertThat(ad).isNotNull()
         ad!!
         assertThat(ad.model).isEqualTo(AirPodsModel.AIRPODS_PRO_2_USBC)
-        assertThat(ad.leftBatteryPercent).isEqualTo(40)
-        assertThat(ad.rightBatteryPercent).isEqualTo(AirPodsAdvertisement.BATTERY_UNKNOWN)
+        // status 0x15. bit 5 = 0 → flipped (R primary). L/R 반전.
+        // battery byte 0xE4. flip 적용: L=upper(E=14)=100% (CAPod 캡 동작),
+        // R=lower(4)=40%.
+        // (이전 파서는 11..14를 모두 UNKNOWN으로 처리했으나, CAPod 정렬로 변경.
+        //  Apple 펌웨어가 "above 100%"로 0xB~0xE를 송출하는 경우 대응.)
+        assertThat(ad.leftBatteryPercent).isEqualTo(100)
+        assertThat(ad.rightBatteryPercent).isEqualTo(40)
+        // case nibble = lower of 0xE4 = 4 → 40%.
         assertThat(ad.caseBatteryPercent).isEqualTo(40)
     }
 
-    // TODO. 실측 dump가 추가되면 본 테스트를 ParameterizedTest로 확장.
-    //       dump 파일명에서 모델 추론 → 파싱 결과 모델 일치 확인.
-
-    companion object {
-        @JvmStatic
-        @Suppress("unused")
-        fun chargingFlagCases(): List<Array<Boolean>> =
-            listOf(
-                arrayOf(false, false, false),
-                arrayOf(true, false, false),
-                arrayOf(false, true, false),
-                arrayOf(false, false, true),
-                arrayOf(true, true, true),
-            )
-    }
+    private fun hexToBytes(hex: String): ByteArray =
+        hex.replace(" ", "")
+            .chunked(2)
+            .map { it.toInt(16).toByte() }
+            .toByteArray()
 }

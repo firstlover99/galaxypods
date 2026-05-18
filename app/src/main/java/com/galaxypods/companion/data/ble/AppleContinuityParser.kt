@@ -14,11 +14,8 @@ import com.galaxypods.companion.domain.model.AirPodsModel
  * - 모든 비트 오프셋은 ParserConfig로 분리 → 펌웨어 변경 시 코드 수정 X.
  * - 본 파서 변경 PR은 반드시 골든바이트 테스트 갱신 동반.
  *
- * **사용 예.**
- * ```
- * val payload = scanRecord.getManufacturerSpecificData(0x004C) ?: return
- * val ad = AppleContinuityParser.parse(payload, rssi = result.rssi)
- * ```
+ * **참조.** CAPod (`d4rken-org/capod`) DualApplePods 파싱 로직 + furiousMAC continuity 사양.
+ * 코드 복사 X — 로직만 참조해 독자 구현 (CLAUDE.md 원칙 3 준수).
  */
 class AppleContinuityParser(
     private val config: ParserConfig = ParserConfig.DEFAULT,
@@ -120,34 +117,66 @@ class AppleContinuityParser(
         timestamp: Long,
     ): AirPodsAdvertisement {
         val deviceType = readDeviceType(data, start)
-
-        val battery1 = data[start + config.battery1Offset].toInt() and 0xFF
-        val battery2 = data[start + config.battery2Offset].toInt() and 0xFF
-        val chargingFlags = data[start + config.chargingOffset].toInt() and 0xFF
-        val inEarFlags = data[start + config.inEarOffset].toInt() and 0xFF
+        val statusByte = data[start + config.statusOffset].toInt() and 0xFF
+        val podsBatteryByte = data[start + config.podsBatteryOffset].toInt() and 0xFF
+        val chargingCaseByte = data[start + config.chargingCaseBatteryOffset].toInt() and 0xFF
         val lidOpenCount = data[start + config.lidOpenOffset].toInt() and 0xFF
 
-        val rightNibble = (battery1 shr 4) and 0x0F
-        val leftNibble = battery1 and 0x0F
-        val caseNibble = battery2 and 0x0F
+        // Status bit 5 = primary pod (1 = L primary). 0이면 R primary → battery/charging 반전.
+        // CAPod DualApplePods 참조.
+        val isLeftPrimary = (statusByte and ParserConfig.MASK_STATUS_LEFT_PRIMARY) != 0
+        val areValuesFlipped = !isLeftPrimary
+        val isThisPodInCase = (statusByte and ParserConfig.MASK_STATUS_THIS_POD_IN_CASE) != 0
 
-        // TODO. 충전 플래그 byte 위치 역추적 필요.
-        //  현재 chargingOffset=7은 실측 패킷에서 IRK 영역(랜덤 바이트)을 가리켜 false positive 발생.
-        //  (2026-05-18 Note 20 실측. 비충전 상태인데 0x72 → bit 1 = L_CHARGING true 잘못 인식)
-        //  알려진 충전 상태(케이스에 넣고 충전 vs 미충전)의 패킷을 비교해 정확한 byte 위치 결정.
-        //  결정 전까지 charging 플래그는 모두 false 강제 → UI에 잘못된 "충전 중" 표시 방지.
-        val chargingDisabled = true
+        // Pods 배터리 — flip 적용
+        val highNibble = (podsBatteryByte shr 4) and 0x0F
+        val lowNibble = podsBatteryByte and 0x0F
+        val leftNibble = if (areValuesFlipped) highNibble else lowNibble
+        val rightNibble = if (areValuesFlipped) lowNibble else highNibble
+
+        // 케이스 배터리 — lower nibble of chargingCaseByte (flip 무관)
+        val caseNibble = chargingCaseByte and 0x0F
+
+        // 충전 플래그 — flip 적용 (case는 flip 무관)
+        val leftCharging =
+            if (areValuesFlipped) {
+                (chargingCaseByte and ParserConfig.MASK_DEFAULT_RIGHT_CHARGING) != 0
+            } else {
+                (chargingCaseByte and ParserConfig.MASK_DEFAULT_LEFT_CHARGING) != 0
+            }
+        val rightCharging =
+            if (areValuesFlipped) {
+                (chargingCaseByte and ParserConfig.MASK_DEFAULT_LEFT_CHARGING) != 0
+            } else {
+                (chargingCaseByte and ParserConfig.MASK_DEFAULT_RIGHT_CHARGING) != 0
+            }
+        val caseCharging = (chargingCaseByte and ParserConfig.MASK_CASE_CHARGING) != 0
+
+        // In-ear — flip XOR isThisPodInCase로 매핑 결정 (CAPod DualApplePods)
+        val flipInEar = areValuesFlipped xor isThisPodInCase
+        val leftInEar =
+            if (flipInEar) {
+                (statusByte and ParserConfig.MASK_IN_EAR_DEFAULT_RIGHT) != 0
+            } else {
+                (statusByte and ParserConfig.MASK_IN_EAR_DEFAULT_LEFT) != 0
+            }
+        val rightInEar =
+            if (flipInEar) {
+                (statusByte and ParserConfig.MASK_IN_EAR_DEFAULT_LEFT) != 0
+            } else {
+                (statusByte and ParserConfig.MASK_IN_EAR_DEFAULT_RIGHT) != 0
+            }
 
         return AirPodsAdvertisement(
             model = modelTable(deviceType),
             leftBatteryPercent = nibbleToPercent(leftNibble),
             rightBatteryPercent = nibbleToPercent(rightNibble),
             caseBatteryPercent = nibbleToPercent(caseNibble),
-            leftInEar = (inEarFlags and ParserConfig.MASK_LEFT_IN_EAR) != 0,
-            rightInEar = (inEarFlags and ParserConfig.MASK_RIGHT_IN_EAR) != 0,
-            leftCharging = !chargingDisabled && (chargingFlags and ParserConfig.MASK_LEFT_CHARGING) != 0,
-            rightCharging = !chargingDisabled && (chargingFlags and ParserConfig.MASK_RIGHT_CHARGING) != 0,
-            caseCharging = !chargingDisabled && (chargingFlags and ParserConfig.MASK_CASE_CHARGING) != 0,
+            leftInEar = leftInEar,
+            rightInEar = rightInEar,
+            leftCharging = leftCharging,
+            rightCharging = rightCharging,
+            caseCharging = caseCharging,
             lidOpenCount = lidOpenCount,
             rssi = rssi,
             timestamp = timestamp,
@@ -172,12 +201,13 @@ class AppleContinuityParser(
     /**
      * 4비트 배터리 값(0~15)을 퍼센트로 변환.
      * 0xF는 "정보 없음" → BATTERY_UNKNOWN(-1).
-     * 그 외 0~10은 그대로 *10 → 0~100. (광고는 10% 단위 정보만 제공)
+     * 0~10은 그대로 *10 → 0~100. 10 초과는 100으로 캡 (펌웨어가 가끔 11+ 보냄, CAPod 동일 처리).
      */
     private fun nibbleToPercent(nibble: Int): Int =
         when {
             nibble == ParserConfig.BATTERY_NIBBLE_UNKNOWN -> AirPodsAdvertisement.BATTERY_UNKNOWN
             nibble in 0..10 -> nibble * PERCENT_PER_STEP
+            nibble in 11..14 -> 100 // CAPod 동일 처리. 펌웨어 변동 대응.
             else -> AirPodsAdvertisement.BATTERY_UNKNOWN
         }
 
