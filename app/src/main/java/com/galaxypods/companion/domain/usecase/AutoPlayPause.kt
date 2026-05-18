@@ -62,6 +62,35 @@ class AutoPlayPause
             }
         }
 
+        /**
+         * Bluetooth Classic (A2DP/HSP) 연결 끊김 이벤트 처리.
+         *
+         * **시나리오.** 사용자가 AirPods 양쪽을 케이스에 넣고 뚜껑 닫음 → A2DP 끊김 →
+         * 본 메서드 호출 → 활성 미디어 자동 정지.
+         *
+         * **왜 별도 경로인가.** 신펌웨어 AirPods Pro가 Type 0x07 (in-ear 비트 포함) 광고를
+         * 사실상 송출하지 않아 BLE 기반 [onAdvertisement]가 동작하지 않음. A2DP 끊김은
+         * 시스템 보장 신호 — 신펌웨어/구펌웨어 무관, 100% 동작.
+         *
+         * **단일 pod 제거.** A2DP 유지되므로 본 경로 트리거 X — 불가능. 이는 비루트 한계
+         * 이며 모든 OSS 앱(AndroPods/PodsLink 포함) 공통.
+         */
+        fun onClassicDisconnected() {
+            if (!enabled) return
+            handlePause()
+        }
+
+        /**
+         * Bluetooth Classic 재연결 이벤트.
+         *
+         * **시나리오.** 사용자가 케이스 다시 열어서 AirPods 귀에 착용 → A2DP 재연결 →
+         * 본 메서드 호출 → 우리가 자동 정지시킨 경우에만 재생 재개.
+         */
+        fun onClassicReconnected() {
+            if (!enabled) return
+            handlePlay()
+        }
+
         /** 외부에서 강제 리셋 (사용자가 토글 OFF 후 ON, 페어링 변경 등). */
         fun reset() {
             lastInEar = null

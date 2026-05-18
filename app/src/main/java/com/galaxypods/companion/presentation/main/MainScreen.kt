@@ -140,7 +140,7 @@ private fun HomeContent(
             )
 
             ToggleRow(
-                title = "👂 귀감지 자동 정지",
+                title = "👂 자동 정지 (케이스 닫음)",
                 checked = state.autoPauseEnabled,
                 onCheckedChange = viewModel::setAutoPause,
             )

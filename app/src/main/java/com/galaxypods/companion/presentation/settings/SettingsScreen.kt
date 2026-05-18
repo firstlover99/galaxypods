@@ -73,25 +73,34 @@ fun SettingsScreen(
                     .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            SectionTitle("귀감지 자동 정지")
+            SectionTitle("자동 정지/재생")
             SettingCard {
                 SwitchRow(
                     title = "자동 정지/재생 사용",
                     checked = state.autoPauseEnabled,
                     onCheckedChange = viewModel::setAutoPauseEnabled,
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text =
+                        "케이스에 넣고 뚜껑 닫으면 음악 자동 정지 (보장). " +
+                            "한쪽만 빼는 자동 정지는 Apple의 iOS 전용 신호라 비루트 " +
+                            "Android에서는 페어링 시점 광고에 한해 동작.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "정지 트리거 모드",
+                    text = "BLE 광고 기반 트리거 모드 (보조)",
                     style = MaterialTheme.typography.titleSmall,
                 )
                 ModeRadio(
-                    label = "한쪽이라도 빼면 정지 (권장)",
+                    label = "한쪽이라도 빼면 정지 (광고 수신 시)",
                     selected = state.autoPauseMode == AutoPlayPause.Mode.RELAXED_EITHER,
                     onClick = { viewModel.setAutoPauseMode(AutoPlayPause.Mode.RELAXED_EITHER) },
                 )
                 ModeRadio(
-                    label = "양쪽 모두 빼야 정지",
+                    label = "양쪽 모두 빼야 정지 (광고 수신 시)",
                     selected = state.autoPauseMode == AutoPlayPause.Mode.STRICT_BOTH,
                     onClick = { viewModel.setAutoPauseMode(AutoPlayPause.Mode.STRICT_BOTH) },
                 )

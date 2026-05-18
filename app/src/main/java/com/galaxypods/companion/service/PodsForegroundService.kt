@@ -162,20 +162,27 @@ class PodsForegroundService : Service() {
             .launchIn(scope)
     }
 
-    /** CONNECTED → DISCONNECTED 전이 시 마지막 위치 fetch + 분실 감지 예약. */
+    /** CONNECTED → DISCONNECTED 전이 시 마지막 위치 fetch + 분실 감지 예약 + 자동 일시정지. */
     private fun handleConnectionTransition(newStatus: PodsRepository.ConnectionStatus) {
         val wasConnected = lastConnectionStatus == PodsRepository.ConnectionStatus.CONNECTED
         val nowDisconnected = newStatus == PodsRepository.ConnectionStatus.DISCONNECTED
         val nowConnected = newStatus == PodsRepository.ConnectionStatus.CONNECTED
 
-        // 재연결 시 분실 감지 예약 취소
+        // 재연결 시 분실 감지 예약 취소 + 자동 정지된 경우 재생 재개
         if (nowConnected) {
             pendingLostCheck?.cancel()
             pendingLostCheck = null
+            if (!wasConnected) {
+                runCatching { autoPlayPause.onClassicReconnected() }
+            }
             return
         }
 
         if (!wasConnected || !nowDisconnected) return
+
+        // A2DP 끊김 (케이스에 넣어 닫음) → 자동 일시정지. 신펌웨어 AirPods 비루트에서
+        // 유일하게 보장되는 자동 정지 신호 (Type 0x07 광고 의존 X).
+        runCatching { autoPlayPause.onClassicDisconnected() }
 
         scope.launch {
             val locationEnabled = preferences.locationRecordEnabled.firstOrNull() ?: false

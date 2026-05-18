@@ -142,6 +142,54 @@ class AutoPlayPauseTest {
         verify(exactly = 0) { mediaController.play() }
     }
 
+    @Nested
+    @DisplayName("Bluetooth Classic (A2DP) 끊김 기반 자동 정지/재생 — 신펌웨어 보장 경로")
+    inner class ClassicDisconnect {
+        @Test
+        @DisplayName("Classic 끊김 → 음악 활성이면 PAUSE")
+        fun classicDisconnected_pausesWhenMusicActive() {
+            useCase.onClassicDisconnected()
+            verify(exactly = 1) { mediaController.pause() }
+        }
+
+        @Test
+        @DisplayName("Classic 끊김 → 음악 비활성이면 PAUSE X")
+        fun classicDisconnected_noActionWhenMusicInactive() {
+            every { mediaController.isMusicActive } returns false
+            useCase.onClassicDisconnected()
+            verify(exactly = 0) { mediaController.pause() }
+        }
+
+        @Test
+        @DisplayName("Classic 재연결 → 우리가 정지시킨 경우에만 PLAY")
+        fun classicReconnected_playsOnlyIfAutoPaused() {
+            // 우리가 정지시킴
+            useCase.onClassicDisconnected()
+            verify(exactly = 1) { mediaController.pause() }
+
+            // 재연결 → 재생 재개
+            useCase.onClassicReconnected()
+            verify(exactly = 1) { mediaController.play() }
+        }
+
+        @Test
+        @DisplayName("Classic 재연결 — 정지시킨 적 없으면 PLAY X")
+        fun classicReconnected_noPlayIfNotAutoPaused() {
+            useCase.onClassicReconnected()
+            verify(exactly = 0) { mediaController.play() }
+        }
+
+        @Test
+        @DisplayName("enabled=false면 Classic 이벤트도 액션 X")
+        fun classic_disabled_noAction() {
+            useCase.enabled = false
+            useCase.onClassicDisconnected()
+            useCase.onClassicReconnected()
+            verify(exactly = 0) { mediaController.pause() }
+            verify(exactly = 0) { mediaController.play() }
+        }
+    }
+
     private fun adWith(
         left: Boolean,
         right: Boolean,
