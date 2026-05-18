@@ -368,10 +368,13 @@ private fun BatteryCard(
     modifier: Modifier = Modifier,
     label: String,
     percent: Int?,
-    charging: Boolean,
+    @Suppress("UNUSED_PARAMETER") charging: Boolean,
     inEar: Boolean,
     stale: Boolean = false,
 ) {
+    // 충전 표시는 v1.0에서 영구 비활성. iOS 18+ AirPods 펌웨어가 페어링 핸드셰이크 시
+    // charging bit 1+2를 무조건 set하는 패턴 확인 (2026-05-18 실측). 정확한 충전 신호는
+    // AAP/L2CAP (PSM 0x1001) 필요 = root = Play Store 불가. v2.0 영역.
     // stale = 마지막 스냅샷 폴백. 시각적으로 흐릿하게 + 자물쇠 아이콘으로 구별.
     val textColor =
         if (stale) {
@@ -410,7 +413,7 @@ private fun BatteryCard(
                 text =
                     when {
                         stale && percent != null -> "🕒 이전 값"
-                        charging -> "🔌 충전 중"
+                        // charging 표시는 v1.0 비활성 (위 주석 참조)
                         inEar -> "👂 착용"
                         percent == null -> ""
                         else -> "🔋"

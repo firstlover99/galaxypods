@@ -177,9 +177,34 @@ class BluetoothClassicMonitor
                 }.getOrDefault("<perm-denied>")
             Log.i(TAG, "recompute: ${devices.size} devices, airpods=$nameForLog")
 
-            _isAirPodsConnected.value = airpods != null
+            val wasConnected = _isAirPodsConnected.value
+            val nowConnected = airpods != null
+            _isAirPodsConnected.value = nowConnected
             _connectedDeviceName.value =
                 runCatching { airpods?.name }.getOrNull()
+
+            // 연결 전이 시점에 SDP 갱신 시도 — AirPods가 Type 0x07 응답하도록 자극.
+            // (낮은 확률이지만 무비용. CAPod도 유사 패턴.)
+            if (!wasConnected && nowConnected && airpods != null) {
+                triggerSdpRefresh(airpods)
+            }
+        }
+
+        /**
+         * SDP 갱신 — Bluetooth Classic이 갓 연결된 시점에 호출.
+         *
+         * `fetchUuidsWithSdp()`는 비동기 SDP 질의를 발사. AirPods는 SDP 응답 후
+         * Type 0x07 광고를 한 번 송출할 수 있음 (실측 미확정, 시도 가치).
+         * 권한 거부/실패는 silent.
+         */
+        @SuppressLint("MissingPermission")
+        private fun triggerSdpRefresh(device: BluetoothDevice) {
+            runCatching {
+                val success = device.fetchUuidsWithSdp()
+                Log.i(TAG, "fetchUuidsWithSdp(${device.address}) → $success")
+            }.onFailure {
+                Log.w(TAG, "fetchUuidsWithSdp failed: ${it.message}")
+            }
         }
 
         @SuppressLint("MissingPermission")
