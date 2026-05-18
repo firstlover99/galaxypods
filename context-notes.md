@@ -5,6 +5,48 @@
 
 ---
 
+## 🛑 2026-05-19 — **프로젝트 보류 결정**
+
+### 결정 60. 비루트 BLE 한계로 가치 부족 → 개발 중단 (코드는 유지)
+
+**판단 근거.**
+
+비루트 Android에서 가능한 모든 기법 적용 완료. 결과로 본 천장.
+- 배터리 갱신 = **재페어링 시점만** (Type 0x07 광고 의존)
+- 정확도 = **10% 단위** (BLE nibble 한계)
+- 한쪽 pod 자동 정지 = **불가** (AAP/L2CAP root 필수)
+- 충전 표시 = **신뢰 불가** (페어링 시 false positive)
+- ANC/투명도 = **불가** (root)
+
+→ **사용자 일상에서 "실시간 배터리 확인" 욕구 충족 불가**.
+
+**비교 검증.** 모든 비루트 OSS (PodsLink/AndroPods/MaterialPods/CAPod/OpenPods/AirBattery) 동일 한계.
+- PodsLink "real-time" 마케팅도 트릭 (Type 0x10 변화 + 캐시 표시)
+- LibrePods만 root + Xposed로 해결, Play Store 불가
+
+**작업 범위.**
+- ✅ 코드/리포지토리 그대로 유지
+- ✅ README.md에 보류 상태 + 사유 + 재개 조건 명시
+- ✅ 모든 commit + push 유지
+- ❌ 추가 개발 없음
+
+**향후 재개 조건.**
+1. Apple 펌웨어가 Type 0x07 주기 송출 복원 (가능성 낮음)
+2. Android `createL2capChannel`이 PSM 0x1001 (BR/EDR) 허용
+3. Samsung 시스템이 AirPods 배터리 메타데이터 채움
+4. 노선 전환 (root 의무 분기 + F-Droid)
+
+**얻은 자산 (재사용 가치).**
+- BLE Type 0x07 파서 (CAPod 정렬, 28 모델 식별, flip detection)
+- BluetoothClassicMonitor (대부분 OSS에 없음)
+- A2DP 끊김 기반 자동 일시정지
+- 한국어 네이티브 UI + Samsung One UI 분기
+- v2-aap-research.md (다음 시도 시 출발점)
+
+**투입 시간.** 약 18시간 / 2일 (2026-05-18 ~ 2026-05-19)
+
+---
+
 ## 2026-05-18 — Bluetooth Classic 연결 추적 + 파서 LE 수정 + 충전 false positive 차단
 
 ### 결정 56. BluetoothClassicMonitor 도입 — A2DP/HSP가 진짜 "연결됨" 신호
