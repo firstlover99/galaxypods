@@ -131,6 +131,13 @@ class AppleContinuityParser(
         val leftNibble = battery1 and 0x0F
         val caseNibble = battery2 and 0x0F
 
+        // TODO. 충전 플래그 byte 위치 역추적 필요.
+        //  현재 chargingOffset=7은 실측 패킷에서 IRK 영역(랜덤 바이트)을 가리켜 false positive 발생.
+        //  (2026-05-18 Note 20 실측. 비충전 상태인데 0x72 → bit 1 = L_CHARGING true 잘못 인식)
+        //  알려진 충전 상태(케이스에 넣고 충전 vs 미충전)의 패킷을 비교해 정확한 byte 위치 결정.
+        //  결정 전까지 charging 플래그는 모두 false 강제 → UI에 잘못된 "충전 중" 표시 방지.
+        val chargingDisabled = true
+
         return AirPodsAdvertisement(
             model = modelTable(deviceType),
             leftBatteryPercent = nibbleToPercent(leftNibble),
@@ -138,21 +145,27 @@ class AppleContinuityParser(
             caseBatteryPercent = nibbleToPercent(caseNibble),
             leftInEar = (inEarFlags and ParserConfig.MASK_LEFT_IN_EAR) != 0,
             rightInEar = (inEarFlags and ParserConfig.MASK_RIGHT_IN_EAR) != 0,
-            leftCharging = (chargingFlags and ParserConfig.MASK_LEFT_CHARGING) != 0,
-            rightCharging = (chargingFlags and ParserConfig.MASK_RIGHT_CHARGING) != 0,
-            caseCharging = (chargingFlags and ParserConfig.MASK_CASE_CHARGING) != 0,
+            leftCharging = !chargingDisabled && (chargingFlags and ParserConfig.MASK_LEFT_CHARGING) != 0,
+            rightCharging = !chargingDisabled && (chargingFlags and ParserConfig.MASK_RIGHT_CHARGING) != 0,
+            caseCharging = !chargingDisabled && (chargingFlags and ParserConfig.MASK_CASE_CHARGING) != 0,
             lidOpenCount = lidOpenCount,
             rssi = rssi,
             timestamp = timestamp,
         )
     }
 
+    /**
+     * Device Type 2바이트를 **little-endian**으로 읽는다.
+     *
+     * Apple Continuity 와이어 레이아웃에서 device type은 [low, high] 순서로 송신.
+     * 예. AirPods Pro 2 USB-C → wire `24 20` → value `0x2024`.
+     */
     private fun readDeviceType(
         data: ByteArray,
         start: Int,
     ): Int {
-        val high = data[start + config.deviceTypeOffset].toInt() and 0xFF
-        val low = data[start + config.deviceTypeOffset + 1].toInt() and 0xFF
+        val low = data[start + config.deviceTypeOffset].toInt() and 0xFF
+        val high = data[start + config.deviceTypeOffset + 1].toInt() and 0xFF
         return (high shl 8) or low
     }
 

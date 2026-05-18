@@ -16,8 +16,20 @@ data class ParserConfig(
     val version: String = "v1.0-design-doc",
     val proximityPairingType: Int = TYPE_PROXIMITY_PAIRING,
     val expectedLength: Int = LENGTH_PROXIMITY_PAIRING,
-    /** Device Type 2바이트 시작 오프셋 (big-endian). */
-    val deviceTypeOffset: Int = 0,
+    /**
+     * Device Type 2바이트 시작 오프셋.
+     *
+     * Apple Continuity Type 0x07 페이로드 레이아웃.
+     * - payload[0] = prefix (보통 0x07)
+     * - payload[1..2] = Device Type (**little-endian**) ← 본 오프셋
+     *
+     * 따라서 offset=1. 읽기는 LE: payload[offset]=low, payload[offset+1]=high.
+     *
+     * **검증.** 2026-05-18 Galaxy Note 20 USB로 AirPods Pro 2 USB-C 재페어링 시
+     * 캡처한 패킷 `07 19 07 24 20 15 ...`에서 wire 바이트 `24 20`을 LE로
+     * 읽으면 0x2024 = AIRPODS_PRO_2_USBC 룩업 일치.
+     */
+    val deviceTypeOffset: Int = 1,
     /** in-ear 비트 플래그가 있는 바이트 오프셋. left=bit3, right=bit1. */
     val inEarOffset: Int = 3,
     /** 배터리 1바이트(상위 4비트=right, 하위 4비트=left, 0~15). */

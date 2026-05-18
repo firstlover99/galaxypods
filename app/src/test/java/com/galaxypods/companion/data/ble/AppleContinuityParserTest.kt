@@ -58,9 +58,12 @@ class AppleContinuityParserTest {
         payload[1] = ParserConfig.LENGTH_PROXIMITY_PAIRING.toByte()
 
         val valueStart = 2
-        // Device Type (big-endian)
-        payload[valueStart + 0] = ((deviceType shr 8) and 0xFF).toByte()
+        // payload[0] = prefix (실측 wire는 0x07). 파서가 무시.
+        payload[valueStart + 0] = 0x07
+        // Device Type (**little-endian**: low byte first, high byte second)
+        // 실측 와이어 레이아웃 일치 (deviceTypeOffset=1).
         payload[valueStart + 1] = (deviceType and 0xFF).toByte()
+        payload[valueStart + 2] = ((deviceType shr 8) and 0xFF).toByte()
 
         // in-ear flags
         var inEarByte = 0
@@ -137,9 +140,10 @@ class AppleContinuityParserTest {
         assertThat(ad.caseBatteryPercent).isEqualTo(50)
         assertThat(ad.leftInEar).isTrue()
         assertThat(ad.rightInEar).isFalse()
+        // 충전 플래그는 현재 강제 false (역추적 필요, 파서 TODO 참조).
         assertThat(ad.leftCharging).isFalse()
         assertThat(ad.rightCharging).isFalse()
-        assertThat(ad.caseCharging).isTrue()
+        assertThat(ad.caseCharging).isFalse()
         assertThat(ad.lidOpenCount).isEqualTo(7)
         assertThat(ad.rssi).isEqualTo(-50)
         assertThat(ad.timestamp).isEqualTo(1000L)
@@ -212,8 +216,8 @@ class AppleContinuityParserTest {
 
     @ParameterizedTest
     @MethodSource("chargingFlagCases")
-    @DisplayName("충전 플래그 비트별 정확 추출")
-    fun parse_chargingFlags(
+    @DisplayName("충전 플래그는 현재 강제 false (정확 byte 위치 역추적 전까지)")
+    fun parse_chargingFlags_alwaysFalseUntilReverseEngineered(
         leftCharging: Boolean,
         rightCharging: Boolean,
         caseCharging: Boolean,
@@ -227,9 +231,10 @@ class AppleContinuityParserTest {
 
         val ad = parser.parse(payload)!!
 
-        assertThat(ad.leftCharging).isEqualTo(leftCharging)
-        assertThat(ad.rightCharging).isEqualTo(rightCharging)
-        assertThat(ad.caseCharging).isEqualTo(caseCharging)
+        // 파서가 chargingDisabled=true로 잠금. UI에 잘못된 "충전 중" 표시 방지.
+        assertThat(ad.leftCharging).isFalse()
+        assertThat(ad.rightCharging).isFalse()
+        assertThat(ad.caseCharging).isFalse()
     }
 
     // ============================================================
@@ -241,6 +246,42 @@ class AppleContinuityParserTest {
     fun realDumpsDirectory_exists() {
         val resource = javaClass.classLoader?.getResource("ble_dumps/README.md")
         assertThat(resource).isNotNull()
+    }
+
+    @Test
+    @DisplayName("실측 캡처 — AirPods Pro 2 USB-C 재페어링 시 Type 0x07 (Note 20 / 2026-05-18)")
+    fun parse_realCapture_airPodsPro2UsbcDuringRepair() {
+        // Galaxy Note 20 Ultra USB로 AirPods Pro 2 USB-C 재페어링 중 캡처.
+        // wire bytes (manufacturerSpecificData):
+        //   07 19 07 24 20 15 E4 E4 44 72 8D 5E FA BC 29 BD FB 7F BC 14 81 DE C3 C6 E3 27 A9
+        // 분해.
+        //   [0..1] TLV header: type=0x07, length=0x19 (25바이트 페이로드)
+        //   [2]    prefix 0x07
+        //   [3..4] device type LE: 0x24 0x20 → 0x2024 (AIRPODS_PRO_2_USBC)
+        //   [5]    status 0x15 (in-ear/lid 비트)
+        //   [6]    battery 1: 0xE4 (high=R=0xE=unknown, low=L=0x4=40%)
+        //   [7]    battery 2: 0xE4 (low=case=0x4=40%)
+        //   [8]    충전 플래그: 0x44
+        //   [9+]   암호화된 IRK
+        val realParser =
+            AppleContinuityParser(
+                config = ParserConfig.DEFAULT,
+                modelTable = AirPodsModelTable::identify,
+            )
+        val hex = "071907242015E4E444728D5EFABC29BDFB7FBC1481DEC3C6E327A9"
+        val data =
+            hex.chunked(2)
+                .map { it.toInt(16).toByte() }
+                .toByteArray()
+
+        val ad = realParser.parse(data)
+
+        assertThat(ad).isNotNull()
+        ad!!
+        assertThat(ad.model).isEqualTo(AirPodsModel.AIRPODS_PRO_2_USBC)
+        assertThat(ad.leftBatteryPercent).isEqualTo(40)
+        assertThat(ad.rightBatteryPercent).isEqualTo(AirPodsAdvertisement.BATTERY_UNKNOWN)
+        assertThat(ad.caseBatteryPercent).isEqualTo(40)
     }
 
     // TODO. 실측 dump가 추가되면 본 테스트를 ParameterizedTest로 확장.

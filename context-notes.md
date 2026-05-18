@@ -5,6 +5,66 @@
 
 ---
 
+## 2026-05-18 — Bluetooth Classic 연결 추적 + 파서 LE 수정 + 충전 false positive 차단
+
+### 결정 56. BluetoothClassicMonitor 도입 — A2DP/HSP가 진짜 "연결됨" 신호
+
+**왜.** BLE 광고는 페어링 활성 상태에서만 나옴. 케이스 닫음 ≠ 사용자가 해제했음일 수 있어 광고 끊김만으로 진짜 연결 해제 판단 불가. A2DP/HSP 프로필 연결 상태는 시스템 Bluetooth 스택이 직접 관리 → 진실 출처.
+
+**구현.**
+- `BluetoothClassicMonitor` (Singleton). `BluetoothManager.adapter.getProfileProxy(A2DP|HEADSET)` + BroadcastReceiver
+- `BluetoothProfile.A2DP.connectedDevices` + `HEADSET.connectedDevices` → AirPods 식별 → StateFlow
+- AirPods 식별. (1) AAP UUID `74ec2172-0bad-4d01-8f77-997b2be0722a` 보유 → 확정, (2) 폴백. 이름에 `airpods/pods/beats/powerbeats` 포함
+- `PodsRepositoryImpl.startScanning`에서 1회 활성화. status는 Classic 모니터가 결정
+
+**핵심 버그 두 가지 — 실측 검증 후 발견.**
+1. **`RECEIVER_NOT_EXPORTED` 차단** — 시스템 브로드캐스트 못 받음. Android 14+ 정책으로 `RECEIVER_EXPORTED` 필요. NOT_EXPORTED는 같은 앱 내 브로드캐스트만 수신.
+2. **브로드캐스트 누락 대응 폴링** — OEM 변형/타이밍 대응 위해 5초마다 강제 recompute 추가. 안전망.
+
+**검증 (Note 20, 2026-05-18 11:09~11:10).**
+```
+recompute: 1 devices, airpods=민호의 AirPods Pro     ← 시작 시 인식
+recompute: 1 devices, airpods=민호의 AirPods Pro     ← 5초 폴링
+Connection event: HEADSET CONNECTION_STATE_CHANGED   ← 케이스 닫음 즉시 감지
+recompute: 0 devices, airpods=<none>                  ← 0.5초 안에 끊김 반영
+Connection event: ACL_DISCONNECTED
+Connection event: A2DP CONNECTION_STATE_CHANGED
+```
+
+### 결정 57. Device Type 파서 little-endian 수정 (offset=1)
+
+**왜.** 실측 캡처 `07 19 07 24 20 15 ...`에서 device type bytes가 `24 20` (LE) → 0x2024 (AIRPODS_PRO_2_USBC). 기존 파서가 BE로 읽어 0x0724 → UNKNOWN. 모델 테이블의 0x2024가 정답이었지만 파서가 못 찾음.
+
+**수정.**
+- `ParserConfig.deviceTypeOffset = 1` (prefix 바이트 스킵)
+- `readDeviceType`을 LE: `(high << 8) | low` where `low=offset+0, high=offset+1`
+- 테스트 `buildPayload`도 prefix + LE 배치로 업데이트
+- 실측 캡처 패킷 골든 테스트 추가 (`parse_realCapture_airPodsPro2UsbcDuringRepair`)
+
+### 결정 58. 충전 플래그 임시 비활성 (chargingDisabled=true)
+
+**왜.** 실측 패킷에서 `chargingOffset=7`이 IRK 영역(랜덤 바이트)을 가리켜 비충전 상태에서도 false positive. 사용자가 "충전 중 아닌데 충전 중으로 나옴" 보고.
+
+**임시 조치.** 파서가 항상 charging=false 반환. UI에 잘못된 "🔌 충전 중" 배지 표시 방지.
+
+**TODO.** 알려진 충전 상태(케이스에 넣고 충전 vs 미충전)의 패킷을 비교해 정확한 byte 위치 + 비트 마스크 역추적 후 재활성.
+
+### 결정 59. 배터리 실시간 갱신은 v2.0 영역 — 한계 명시
+
+**확정 사실.**
+- Type 0x07 (배터리 포함)은 페어링 핸드셰이크 순간에만 송출. 케이스 열기/닫기로 트리거 안 됨.
+- 페어링 활성 후엔 Type 0x10 (Nearby Info)만 옴 — 배터리 정보 없음.
+- Samsung 시스템 메타데이터도 AirPods 배터리 = null (`untethered_*_battery=null`)
+- 실시간 배터리 갱신 = v2.0 AAP/L2CAP (PSM 0x1001) 필요 → 루트 의무 → v2-aap-research §1
+
+**현재 UX 전략.**
+- 마지막 페어링 때 받은 배터리값을 스냅샷으로 영구 보존 (결정 52)
+- "마지막 확인. X분 전" 명시로 stale 분명히 표현
+
+**v1.0 출시 정책 (재확정).** 솔직한 안내 + 구펌웨어 한정 동작. 신펌웨어는 페어링 시점 배터리 + 스냅샷 폴백.
+
+---
+
 ## 2026-05-18 — Persistent Snapshot 폴백 도입 (PodsLink 패턴 차용)
 
 ### 결정 52. 마지막 스냅샷을 메인 화면에 폴백 표시
