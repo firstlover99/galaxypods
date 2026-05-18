@@ -222,6 +222,22 @@
 - [ ] Play Console 등록 ($25) + AAB 업로드
 - [ ] Internal → Closed → Open Beta → Production 단계 배포
 
+### v1.0 실기기 검증 결과 (2026-05-18, 두 단말)
+
+검증 단말. Galaxy S24 Ultra (Android 16 / One UI 8.0) + Galaxy Note 20 Ultra (Android 13 / One UI 5.0)
+
+- [x] Application + Hilt + Compose 정상 동작 (두 단말)
+- [x] Onboarding 5단계 흐름 정상
+- [x] FGS 자동 시작 (MainScreen LaunchedEffect)
+- [x] BLE 스캔 동작 (356+ Apple 광고 수신)
+- [x] edge-to-edge + safeDrawingPadding (시스템 바 가려짐 X)
+- [x] Theme.DeviceDefault 호환 (One UI 8 inflate 충돌 해결)
+- [x] Type 0x10 Nearby Info 거짓 양성 방지
+- [ ] **Type 0x07 (Proximity Pairing) 수신 — 신펌웨어 AirPods Pro에서 0건** ★
+  - 두 단말 모두 동일. AirPods Pro 자체가 광고 안 함
+  - v1.0은 구펌웨어 / AirPods 2/3 / AirPods Max에서만 배터리 표시
+  - 신펌웨어 = v2.0+ AAP/L2CAP 필요
+
 ### 출시 전 마지막 점검 (사용자 액션 필요)
 
 - [ ] `docs/_config.yml`의 `baseurl`을 실제 리포명으로 변경
@@ -246,10 +262,14 @@
 - [ ] 네이버 지도 SDK 통합 (Google Maps 대안)
 - [ ] BLE RSSI 기반 Find My 가이드 (마지막 위치 적극형) — PodsLink 차용
 
-### v2.0
+### v2.0 — **AAP/L2CAP 채널 (실기기 검증으로 최우선 격상)**
+- [ ] **Apple Accessory Protocol L2CAP CoC (PSM 0x1001) 채널 구현 — 최우선** ★
+  - 신펌웨어 AirPods Pro의 Type 0x07 광고 미송출 한계 극복
+  - 페어링 active 상태에서 실시간 배터리/in-ear/모델 정확 수신
+  - LibrePods (GPLv3) 코드 직접 복사 금지 — AAP Definitions.md만 참조해 독자 구현
 - [ ] Galaxy Watch 모듈 (IAP)
 - [ ] 시스템 Equalizer 노출 (Audio Effects API) — PodsLink 차용
-- [ ] 1% 단위 배터리 (AAP 채널 검토)
+- [ ] 1% 단위 배터리 (AAP 채널 검토 → AAP로 자동 해결)
 - [ ] 다중 기기 관리 (IAP)
 
 ### v2.0+

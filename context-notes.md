@@ -5,6 +5,66 @@
 
 ---
 
+## 2026-05-18 — 첫 실기기 검증 (Galaxy S24 Ultra + Note 20 Ultra)
+
+### 결정 45. 두 단말에서 검증 — 코드는 모두 정상, AirPods Pro 신펌웨어 한계 확인
+
+**검증 단말**.
+- Galaxy S24 Ultra (SM-S928N) — Android 16 (API 36) / One UI 8.0
+- Galaxy Note 20 Ultra (SM-N986N) — Android 13 (API 33) / One UI 5.0
+
+**기록된 사실**.
+- ✅ Application + Hilt + Compose + Onboarding + MainScreen + FGS + BLE 스캔 모두 정상
+- ✅ Apple 광고 다수 수신 (총 356+건)
+  - Type 0x10 (Nearby Info): 274건
+  - Type 0x12 (Find My): 59건
+  - Type 0x16 (기타): 23건
+- ❌ **Type 0x07 (Proximity Pairing) — 0건**
+- AirPods Pro 신펌웨어 (iOS 17.5+)가 Type 0x07 광고를 사실상 송출 안 함
+
+**확인된 한계**. v1.0 BLE-only 방식으로는 신펌웨어 AirPods Pro 배터리 정보 못 받음.
+LibrePods / AndroPods / PodsLink 모두 같은 제약. **v2.0+ AAP/L2CAP 채널이 유일한 해결책**.
+
+### 결정 46. v1.0 출시 정책 — 솔직한 안내 + 구펌웨어 한정 동작
+
+UX 결정.
+- 메인 화면. 광고 미수신 시 "이어폰을 찾는 중" 유지
+- Type 0x10 (Nearby Info) 받아도 status 변경 X (거짓 양성 방지)
+- 케이스 뚜껑 열기 안내 문구 (Type 0x07 송출 트리거)
+- 스토어 설명에 "구펌웨어 AirPods Pro / AirPods 2/3, AirPods Max 동작" 명시
+
+### 결정 47. v1.1 Theme inflate 충돌 해결 = DeviceDefault 기반
+
+**왜.** Galaxy S24 Ultra (One UI 8.0)에서 `android:Theme.Material.Light.NoActionBar` 시 즉시 튕김. OEM theme override 시 attribute inflate 실패. `Theme.DeviceDefault.Light.NoActionBar`로 변경 → OEM 기본 따라가 호환성 최대.
+
+### 결정 48. Edge-to-edge 명시 + safeDrawingPadding 필수
+
+**왜.** compileSdk 35 + Android 15+에서 ComponentActivity는 edge-to-edge 자동 적용. 그러나 OnboardingScreen 등 Scaffold 없는 화면은 시스템 바 가려짐. 모든 화면에 `safeDrawingPadding()` 또는 Scaffold 사용 필수.
+
+### 결정 49. BLE ScanFilter manufacturerId만 사용 (Type/Length 마스크 제거)
+
+**왜.** AirPods Pro 신펌웨어 광고가 다양한 Type/Length 변종 (Type 0x10이 5/6/7바이트 등). 우리 마스크 `[0x07, 0x19]`가 너무 엄격해 진짜 0x07조차 일부 변종에서 거부. manufacturerId만 매칭 + 코드 레벨에서 Type 0x07 검증 → 안정.
+
+### 결정 50. PodsRepositoryImpl model UNKNOWN은 status 변경 X
+
+**왜.** Type 0x10 (Nearby Info) fallback이 광고 수신 시 status를 CONNECTED로 바꾸면 거짓 양성. 사용자가 "연결됨"으로 오해. AirPods 페어링 해제 + 케이스 닫힘에도 다른 Apple 기기 광고로 "연결됨" 표시.
+
+**구체.** `if (parsed.model != UNKNOWN) { _status.value = CONNECTED }`. Type 0x10은 받지만 무시.
+
+### 결정 51. ADB 진단 자동화 스크립트
+
+`scripts/diagnose-usb.ps1` 도입. 한 줄 실행으로 6단계.
+1. ADB devices (정규식 캡처)
+2. 단말 정보 (Brand/Model/Android/One UI)
+3. uninstall
+4. install -r
+5. logcat clear + app launch + 6초 대기
+6. FATAL EXCEPTION + GalaxyPods 로그 자동 추출
+
+향후 모든 실기기 검증에 사용.
+
+---
+
 ## 2026-05-15 — Phase 8 출시 준비 (Claude 코드 측 완료)
 
 ### 결정 40. About 화면을 별도로 두고 면책을 항상 접근 가능하게
