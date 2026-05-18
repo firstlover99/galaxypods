@@ -1,6 +1,8 @@
 // 메인 화면 Compose UI — 검토안 §6.2 + Tip 카드 + Settings 진입
 package com.galaxypods.companion.presentation.main
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -151,9 +154,63 @@ private fun HomeContent(
                 onClick = onLocation,
             )
 
+            // 배터리 갱신 안 됨 안내 — Type 0x07이 페어링 시점에만 송출되는 한계 설명
+            if (state.lastSnapshot != null) {
+                BatteryRefreshGuideCard()
+            }
+
             TipCard(tip = tip)
 
             DisclaimerSection()
+        }
+    }
+}
+
+@Composable
+private fun BatteryRefreshGuideCard() {
+    val context = LocalContext.current
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            ),
+        shape = RoundedCornerShape(16.dp),
+        onClick = {
+            runCatching {
+                context.startActivity(
+                    Intent(Settings.ACTION_BLUETOOTH_SETTINGS).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    },
+                )
+            }
+        },
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                text = "🔄 배터리가 갱신 안 되나요?",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text =
+                    "AirPods는 페어링 순간에만 배터리 정보를 보냅니다. 갱신하려면 " +
+                        "Bluetooth 설정에서 한 번 연결 해제 후 다시 연결하세요.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+            )
+            Text(
+                text = "→ 탭하여 Bluetooth 설정 열기",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+            )
         }
     }
 }

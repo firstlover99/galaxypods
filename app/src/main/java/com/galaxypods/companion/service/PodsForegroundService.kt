@@ -236,7 +236,22 @@ class PodsForegroundService : Service() {
         val left = ad.leftBatteryPercent.takeIf { it >= 0 }?.let { "L $it%" } ?: "L —"
         val right = ad.rightBatteryPercent.takeIf { it >= 0 }?.let { "R $it%" } ?: "R —"
         val case = ad.caseBatteryPercent.takeIf { it >= 0 }?.let { "📦 $it%" } ?: "📦 —"
-        return "${ad.model.displayName}  ·  $left  $right  $case"
+        val ts = ad.timestamp.takeIf { it > 0 }?.let { " · ${formatTimeAgoShort(it)}" } ?: ""
+        return "${ad.model.displayName}  ·  $left  $right  $case$ts"
+    }
+
+    /** 알림용 짧은 상대시간. */
+    private fun formatTimeAgoShort(timestamp: Long): String {
+        val diffMs = System.currentTimeMillis() - timestamp
+        if (diffMs < 0) return "방금"
+        val minutes = diffMs / 60_000L
+        val hours = minutes / 60
+        return when {
+            minutes < 1 -> "방금"
+            minutes < 60 -> "${minutes}분 전"
+            hours < 24 -> "${hours}시간 전"
+            else -> "오래 전"
+        }
     }
 
     private fun buildNotification(content: String): Notification = buildNotification(content, ad = null)

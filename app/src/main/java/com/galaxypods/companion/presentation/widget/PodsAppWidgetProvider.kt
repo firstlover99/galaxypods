@@ -75,6 +75,10 @@ class PodsAppWidgetProvider : AppWidgetProvider() {
                 R.id.widget_model,
                 snapshot?.model?.displayName ?: "이어폰 검색 중",
             )
+            views.setTextViewText(
+                R.id.widget_timestamp,
+                snapshot?.timestamp?.let { formatTimeAgo(it) } ?: "",
+            )
             views.setTextViewText(R.id.widget_left_value, formatPercent(snapshot?.leftBatteryPercent))
             views.setTextViewText(R.id.widget_right_value, formatPercent(snapshot?.rightBatteryPercent))
             views.setTextViewText(R.id.widget_case_value, formatPercent(snapshot?.caseBatteryPercent))
@@ -93,6 +97,23 @@ class PodsAppWidgetProvider : AppWidgetProvider() {
         }
 
         private fun formatPercent(percent: Int?): String = percent?.takeIf { it >= 0 }?.let { "$it%" } ?: "—"
+
+        /** 위젯용 짧은 상대시간. MainScreen의 formatTimeAgo와 동일 규칙. */
+        private fun formatTimeAgo(timestamp: Long): String {
+            val diffMs = System.currentTimeMillis() - timestamp
+            if (diffMs < 0) return "방금 전"
+            val seconds = diffMs / 1000
+            val minutes = seconds / 60
+            val hours = minutes / 60
+            val days = hours / 24
+            return when {
+                seconds < 60 -> "방금 전"
+                minutes < 60 -> "${minutes}분 전"
+                hours < 24 -> "${hours}시간 전"
+                days < 7 -> "${days}일 전"
+                else -> "오래 전"
+            }
+        }
 
         private const val REQUEST_OPEN_APP: Int = 300
     }
