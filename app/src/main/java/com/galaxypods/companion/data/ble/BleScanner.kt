@@ -57,7 +57,10 @@ class BleScanner
          */
         @SuppressLint("MissingPermission")
         fun startActiveScan(onResult: (ScanResult) -> Unit): Boolean {
-            Log.i(TAG, "startActiveScan called. ready=$isReady, adapter=${adapter != null}, permission=${hasScanPermission()}")
+            Log.i(
+                TAG,
+                "startActiveScan called. ready=$isReady, adapter=${adapter != null}, permission=${hasScanPermission()}",
+            )
             if (!isReady) {
                 Log.w(TAG, "Not ready — bluetooth off or permission denied")
                 return false

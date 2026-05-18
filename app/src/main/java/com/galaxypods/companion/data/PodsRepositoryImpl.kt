@@ -88,7 +88,10 @@ class PodsRepositoryImpl
                 return
             }
 
-            Log.i(TAG, "Parsed: ${parsed.model.displayName} L=${parsed.leftBatteryPercent}% R=${parsed.rightBatteryPercent}% case=${parsed.caseBatteryPercent}%")
+            val l = parsed.leftBatteryPercent
+            val r = parsed.rightBatteryPercent
+            val c = parsed.caseBatteryPercent
+            Log.i(TAG, "Parsed: ${parsed.model.displayName} L=$l% R=$r% case=$c%")
 
             // model UNKNOWN = Type 0x10 (Nearby Info) fallback → 배터리/모델 정보 없음.
             // 진짜 CONNECTED는 Type 0x07 (Proximity Pairing) 받았을 때만.

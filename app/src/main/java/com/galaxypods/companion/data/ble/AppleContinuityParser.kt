@@ -73,7 +73,10 @@ class AppleContinuityParser(
      * "Apple 기기 발견" 수준의 placeholder 표현. 사용자는 케이스 뚜껑 열기 또는
      * 페어링 모드 진입을 통해 Type 0x07를 받아야 배터리 표시.
      */
-    private fun nearbyInfoFallback(rssi: Int, timestamp: Long): AirPodsAdvertisement =
+    private fun nearbyInfoFallback(
+        rssi: Int,
+        timestamp: Long,
+    ): AirPodsAdvertisement =
         AirPodsAdvertisement(
             model = AirPodsModel.UNKNOWN,
             leftBatteryPercent = AirPodsAdvertisement.BATTERY_UNKNOWN,
